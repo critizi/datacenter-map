@@ -52,7 +52,14 @@ def run() -> None:
     else:
         print("\n== Steps 4-5: LLM agents SKIPPED (ANTHROPIC_API_KEY not set) ==")
 
-    print("\n== Step 6: build dist/ ==")
+    print("\n== Step 6: NASA GIBS satellite imagery ==")
+    try:
+        from pipeline.fetch_images import run as fetch_images
+        fetch_images()
+    except Exception:
+        traceback.print_exc()
+
+    print("\n== Step 7: build dist/ ==")
     n = build.build()
     print(f"\nDone — {n} datacenters in dist/index.html")
 
