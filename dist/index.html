@@ -349,7 +349,11 @@ function updateKPIs() {
 }
 
 function refreshGlobe() {
-  if (globe) globe.pointsData(visiblePoints());
+  if (globe) {
+    const pts = visiblePoints();
+    globe.pointsData(pts);
+    globe.ringsData(pts.filter(d => d.status === "under_construction" || d.status === "planned"));
+  }
   updateKPIs();
 }
 
@@ -453,9 +457,12 @@ try {
     (document.getElementById("globe-container"))
     .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
     .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
-    .backgroundColor("#0a0e14")
-    .pointAltitude(d => Math.max(0.01, Math.min(0.06, (d.capacity_mw || 100) / 40000)))
-    .pointRadius(d => 0.25 + Math.min(0.6, (d.capacity_mw || 100) / 4000))
+    .backgroundColor("#00000000")
+    // Fix: data uses latitude/longitude, not lat/lng
+    .pointLat(d => d.latitude)
+    .pointLng(d => d.longitude)
+    .pointAltitude(d => Math.max(0.02, Math.min(0.10, (d.capacity_mw || 200) / 22000)))
+    .pointRadius(d => 0.45 + Math.min(1.4, (d.capacity_mw || 200) / 1800))
     .pointColor(d => STATUS_COLOR[d.status] || "#888")
     .pointLabel(d => `
       <div style="background:#11161f;border:1px solid #232a37;padding:8px 10px;border-radius:6px;font-family:sans-serif;font-size:12px;color:#e6edf3;max-width:260px">
@@ -465,14 +472,39 @@ try {
       </div>
     `)
     .onPointClick(d => openDetail(d))
+    // Pulsing rings for under-construction and planned sites
+    .ringLat(d => d.latitude)
+    .ringLng(d => d.longitude)
+    .ringColor(d => STATUS_COLOR[d.status] || "#888")
+    .ringMaxRadius(3.5)
+    .ringPropagationSpeed(1.2)
+    .ringRepeatPeriod(1400)
     .atmosphereColor("#4cc2ff")
-    .atmosphereAltitude(0.15);
+    .atmosphereAltitude(0.28);
 
   globe.controls().autoRotate = true;
   globe.controls().autoRotateSpeed = 0.35;
   document.getElementById("globe-container").addEventListener("mousedown", () => {
     globe.controls().autoRotate = false;
   }, { once: true });
+
+  // Three.js starfield injected into the globe's scene
+  if (typeof THREE !== "undefined") {
+    const count = 4000;
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 500 + Math.random() * 400;
+      pos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.75 });
+    globe.scene().add(new THREE.Points(geo, mat));
+  }
 } catch (e) {
   console.error("Globe init failed:", e);
   document.getElementById("globe-container").innerHTML =
