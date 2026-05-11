@@ -33,7 +33,16 @@ def load_records() -> list[dict]:
     conn = connect()
     try:
         rows = conn.execute("SELECT * FROM datacenters").fetchall()
-        return [dict(r) for r in rows]
+        records = [dict(r) for r in rows]
+        for r in records:
+            tenants = conn.execute(
+                "SELECT tenant_name, parent_company, ticker, workload, share_pct, "
+                "dollars_committed, evidence_quote, confidence, source_url "
+                "FROM datacenter_tenants WHERE datacenter_id = ?",
+                (r["id"],),
+            ).fetchall()
+            r["tenants"] = [dict(t) for t in tenants]
+        return records
     finally:
         conn.close()
 

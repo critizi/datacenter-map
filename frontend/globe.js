@@ -35,34 +35,6 @@ function operatorInfo(op) {
   return OPERATOR_INFO[op] || { parent: op, ticker: null, quote: null };
 }
 
-// Tenant extraction — heuristic, runs against the free-text capacity_use prose.
-// Phase 2 replaces this with a real `tenants` schema + LLM enrichment.
-const TENANT_PATTERNS = [
-  { name: "Anthropic",         re: /\bAnthropic\b/i },
-  { name: "OpenAI",            re: /\bOpenAI\b/i },
-  { name: "xAI",               re: /\bxAI\b|\bGrok\b/i },
-  { name: "Meta AI",           re: /\bMeta AI\b|\bLlama\b/i },
-  { name: "Google DeepMind",   re: /\bDeepMind\b|\bGemini\b/i },
-  { name: "Apple Intelligence",re: /\bApple Intelligence\b/i },
-  { name: "Microsoft Copilot", re: /\bCopilot\b/i },
-  { name: "ByteDance / TikTok",re: /\bTikTok\b/i },
-  { name: "Amazon Bedrock",    re: /\bBedrock\b/i },
-];
-const COMMITMENT_RE = /\$\d{1,3}(?:\.\d+)?\s*(?:B(?:illion)?|M(?:illion)?|T(?:rillion)?)\+?/g;
-
-function extractTenants(text) {
-  if (!text) return [];
-  const found = new Set();
-  for (const { name, re } of TENANT_PATTERNS) {
-    if (re.test(text)) found.add(name);
-  }
-  return [...found];
-}
-function extractCommitments(text) {
-  if (!text) return [];
-  return [...new Set((text.match(COMMITMENT_RE) || []).map(s => s.replace(/\s+/g, "")))];
-}
-
 // ----- State -----
 
 const state = {
@@ -74,10 +46,10 @@ const state = {
   activeTab: "overview",
 };
 
-// Cache tenant list per record so we don't re-regex
+// Cache structured tenant list per record for filters/tooltips.
 state.data.forEach(d => {
-  d._tenants = extractTenants(d.capacity_use);
-  d._commitments = extractCommitments(d.capacity_use);
+  d._tenants = (d.tenants || []).map(t => t.tenant_name).filter(Boolean);
+  d._commitments = [...new Set((d.tenants || []).map(t => t.dollars_committed).filter(Boolean))];
 });
 
 // Operator fleet max MW — for the capacity-vs-fleet bar
@@ -258,6 +230,7 @@ function openDetail(dc) {
     tBoxLarge.classList.remove("empty");
     tenants.forEach(t => tBoxLarge.appendChild(makeTenantChip(t, false)));
   }
+  renderTenantTable(dc);
 
   // Commitments
   const cBox = document.getElementById("dc-commitments");
@@ -347,6 +320,84 @@ function makeTenantChip(name, large) {
     chip.classList.toggle("active");
   });
   return chip;
+}
+
+function fmtPct(v) {
+  if (v === null || v === undefined || v === "") return "—";
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "—";
+  return `${n.toFixed(Number.isInteger(n) ? 0 : 1)}%`;
+}
+
+function tenantCell(text, className = "") {
+  const td = document.createElement("td");
+  if (className) td.className = className;
+  td.textContent = text || "—";
+  return td;
+}
+
+function renderTenantTable(dc) {
+  const table = document.getElementById("dc-tenants-table");
+  const body = document.getElementById("dc-tenants-table-body");
+  const empty = document.getElementById("dc-tenants-empty");
+  if (!table || !body || !empty) return;
+
+  const tenants = dc.tenants || [];
+  body.innerHTML = "";
+  table.hidden = tenants.length === 0;
+  empty.hidden = tenants.length !== 0;
+
+  tenants.forEach(t => {
+    const row = document.createElement("tr");
+    row.appendChild(tenantCell(t.tenant_name, "tenant-name"));
+    row.appendChild(tenantCell(t.ticker));
+    row.appendChild(tenantCell(t.workload));
+    row.appendChild(tenantCell(fmtPct(t.share_pct)));
+    row.appendChild(tenantCell(t.dollars_committed));
+    row.appendChild(tenantCell((t.confidence || "—").toUpperCase(), `conf-${t.confidence || "unknown"}`));
+
+    const src = document.createElement("td");
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "evidence-toggle";
+    toggle.textContent = "Evidence";
+    src.appendChild(toggle);
+    if (t.source_url) {
+      const a = document.createElement("a");
+      a.href = t.source_url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = urlHost(t.source_url);
+      src.appendChild(a);
+    }
+    row.appendChild(src);
+
+    const quoteRow = document.createElement("tr");
+    quoteRow.className = "tenant-evidence-row";
+    quoteRow.hidden = true;
+    const quoteCell = document.createElement("td");
+    quoteCell.colSpan = 7;
+    const quote = document.createElement("em");
+    quote.textContent = t.evidence_quote || "No evidence quote recorded.";
+    quoteCell.appendChild(quote);
+    if (t.source_url) {
+      const quoteLink = document.createElement("a");
+      quoteLink.href = t.source_url;
+      quoteLink.target = "_blank";
+      quoteLink.rel = "noopener";
+      quoteLink.textContent = urlHost(t.source_url);
+      quoteCell.appendChild(quoteLink);
+    }
+    quoteRow.appendChild(quoteCell);
+
+    toggle.addEventListener("click", () => {
+      quoteRow.hidden = !quoteRow.hidden;
+      toggle.classList.toggle("active", !quoteRow.hidden);
+    });
+
+    body.appendChild(row);
+    body.appendChild(quoteRow);
+  });
 }
 
 function closeDetail() {
@@ -536,7 +587,7 @@ function rebuildTenantFilterPills() {
   const tenants = Object.keys(tenantCounts).sort((a, b) => tenantCounts[b] - tenantCounts[a]);
 
   if (tenants.length === 0) {
-    box.innerHTML = `<span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-mute);letter-spacing:0.1em">NONE PARSED</span>`;
+    box.innerHTML = `<span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-mute);letter-spacing:0.1em">NO STRUCTURED TENANTS</span>`;
     return;
   }
   tenants.forEach(t => {
