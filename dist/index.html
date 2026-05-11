@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Datacenter Map</title>
+<meta name="description" content="Interactive 3D globe of the world's data centers — capacity, status, build timelines." />
+<style>:root {
+  --bg: #0a0e14;
+  --panel: #11161f;
+  --panel-2: #161c27;
+  --border: #232a37;
+  --text: #e6edf3;
+  --text-dim: #8b97a8;
+  --accent: #4cc2ff;
+  --green: #3fb950;
+  --yellow: #f0b429;
+  --blue: #4cc2ff;
+  --red: #f85149;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+#globe-container {
+  position: absolute;
+  inset: 0;
+}
+
+.topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: linear-gradient(180deg, rgba(10,14,20,0.9) 0%, rgba(10,14,20,0) 100%);
+  pointer-events: none;
+}
+.topbar > * { pointer-events: auto; }
+
+.brand {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-right: 8px;
+}
+.brand .accent { color: var(--accent); }
+
+.kpi-strip {
+  display: flex;
+  gap: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+}
+.kpi-strip .kpi { display: flex; gap: 6px; align-items: baseline; }
+.kpi-strip .kpi .v { font-weight: 600; color: var(--text); }
+.kpi-strip .kpi .l { color: var(--text-dim); }
+
+.search-box {
+  flex: 1;
+  max-width: 320px;
+  margin-left: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.search-box:focus { border-color: var(--accent); }
+
+.filters {
+  position: absolute;
+  top: 70px;
+  left: 20px;
+  z-index: 10;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12px;
+  min-width: 200px;
+}
+.filters h4 {
+  margin: 0 0 8px 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-dim);
+}
+.filters .group { margin-bottom: 12px; }
+.filters .group:last-child { margin-bottom: 0; }
+.filters label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  user-select: none;
+}
+.filters label:hover { color: var(--accent); }
+.filters input[type="checkbox"] { accent-color: var(--accent); }
+.filters .dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+.detail-panel {
+  position: absolute;
+  top: 0; right: 0;
+  width: 420px;
+  height: 100%;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 200ms ease-out;
+  z-index: 20;
+  overflow-y: auto;
+}
+.detail-panel.open { transform: translateX(0); }
+
+.detail-panel .close {
+  position: absolute; top: 10px; right: 14px;
+  background: transparent; border: 0; color: var(--text-dim);
+  font-size: 22px; cursor: pointer;
+}
+.detail-panel .close:hover { color: var(--text); }
+
+.detail-panel .hero {
+  width: 100%;
+  height: 200px;
+  background: var(--panel-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim);
+  font-size: 12px;
+  background-size: cover;
+  background-position: center;
+}
+
+.detail-panel .body { padding: 18px 22px; }
+.detail-panel h2 { margin: 0 0 4px 0; font-size: 18px; }
+.detail-panel .subtitle { color: var(--text-dim); font-size: 12px; margin-bottom: 16px; }
+.detail-panel .badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.badge.operational { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge.under_construction { background: rgba(240,180,41,0.15); color: var(--yellow); }
+.badge.planned { background: rgba(76,194,255,0.15); color: var(--blue); }
+.badge.retired { background: rgba(248,81,73,0.15); color: var(--red); }
+
+.detail-panel .row {
+  display: flex; justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.detail-panel .row .k { color: var(--text-dim); }
+.detail-panel .row .v { color: var(--text); text-align: right; max-width: 60%; }
+
+.detail-panel .section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-dim);
+  margin: 18px 0 8px;
+}
+
+.capacity-gauge {
+  background: var(--panel-2);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 6px;
+}
+.capacity-gauge .mw {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.capacity-gauge .label { font-size: 11px; color: var(--text-dim); }
+
+.timeline {
+  background: var(--panel-2);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.timeline .step {
+  display: flex; gap: 10px; align-items: center;
+  padding: 4px 0;
+}
+.timeline .step .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border);
+}
+.timeline .step.done .dot { background: var(--green); }
+.timeline .step.current .dot { background: var(--yellow); }
+.timeline .step .k { color: var(--text-dim); width: 110px; }
+.timeline .step .v { color: var(--text); }
+
+.sources {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.sources a {
+  display: block;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 4px 0;
+  word-break: break-all;
+}
+.sources a:hover { text-decoration: underline; }
+
+.footer-credit {
+  position: absolute;
+  bottom: 8px; left: 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+  z-index: 5;
+}
+.footer-credit a { color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">Datacenter<span class="accent">Map</span></div>
+  <div class="kpi-strip">
+    <div class="kpi"><span class="v" id="kpi-count">0</span><span class="l">sites</span></div>
+    <div class="kpi"><span class="v" id="kpi-mw">0 MW</span><span class="l">total</span></div>
+    <div class="kpi"><span class="v" id="kpi-construction">0</span><span class="l">under construction</span></div>
+  </div>
+  <input id="search" class="search-box" placeholder="Search operator, country, region…" />
+</div>
+
+<div class="filters">
+  <div class="group">
+    <h4>Status</h4>
+    <div id="filter-statuses"></div>
+  </div>
+  <div class="group">
+    <h4>Operator</h4>
+    <div id="filter-operators"></div>
+  </div>
+</div>
+
+<div id="globe-container"></div>
+
+<aside class="detail-panel" id="detail-panel">
+  <button class="close" id="close-detail" title="Close (Esc)">×</button>
+  <div class="hero">(no photo yet)</div>
+  <div class="body">
+    <h2 class="dc-name">—</h2>
+    <div class="subtitle dc-subtitle">—</div>
+
+    <div class="section-title">Capacity</div>
+    <div class="capacity-gauge"><div class="mw">—</div><div class="label">—</div></div>
+
+    <div class="section-title">Build timeline</div>
+    <div class="timeline"></div>
+
+    <div class="section-title">Details</div>
+    <div class="rows"></div>
+
+    <div class="section-title">Sources</div>
+    <div class="sources"></div>
+  </div>
+</aside>
+
+<div class="footer-credit">
+  Built with <a href="https://globe.gl" target="_blank" rel="noopener">Globe.gl</a> ·
+  Data last refreshed 2026-05-11
+</div>
+
+<script src="//unpkg.com/three@0.158.0/build/three.min.js"></script>
+<script src="//unpkg.com/globe.gl"></script>
+<script>
+window.__DC_DATA__ = [{"id": "aws-us-east-1", "name": "AWS us-east-1 (Northern Virginia)", "operator": "AWS", "latitude": 39.0438, "longitude": -77.4874, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 2600.0, "capacity_use": "AWS us-east-1 region — broadest service availability", "address": null, "country": "USA", "region": "Ashburn, VA", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "aws-us-west-2", "name": "AWS us-west-2 (Oregon)", "operator": "AWS", "latitude": 45.8399, "longitude": -119.7006, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 1500.0, "capacity_use": "AWS us-west-2 region", "address": null, "country": "USA", "region": "Boardman, OR", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "aws-us-east-2", "name": "AWS us-east-2 (Ohio)", "operator": "AWS", "latitude": 39.9612, "longitude": -82.9988, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 900.0, "capacity_use": "AWS us-east-2 region", "address": null, "country": "USA", "region": "Columbus, OH", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "aws-eu-west-1", "name": "AWS eu-west-1 (Ireland)", "operator": "AWS", "latitude": 53.3498, "longitude": -6.2603, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 800.0, "capacity_use": "AWS eu-west-1 region", "address": null, "country": "Ireland", "region": "Dublin", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "aws-eu-central-1", "name": "AWS eu-central-1 (Frankfurt)", "operator": "AWS", "latitude": 50.1109, "longitude": 8.6821, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 700.0, "capacity_use": "AWS eu-central-1 region", "address": null, "country": "Germany", "region": "Frankfurt", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "aws-ap-northeast-1", "name": "AWS ap-northeast-1 (Tokyo)", "operator": "AWS", "latitude": 35.6762, "longitude": 139.6503, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 600.0, "capacity_use": "AWS ap-northeast-1 region", "address": null, "country": "Japan", "region": "Tokyo", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "aws-ap-southeast-1", "name": "AWS ap-southeast-1 (Singapore)", "operator": "AWS", "latitude": 1.3521, "longitude": 103.8198, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "AWS ap-southeast-1 region", "address": null, "country": "Singapore", "region": "Singapore", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "aws-sa-east-1", "name": "AWS sa-east-1 (São Paulo)", "operator": "AWS", "latitude": -23.5505, "longitude": -46.6333, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 350.0, "capacity_use": "AWS sa-east-1 region", "address": null, "country": "Brazil", "region": "São Paulo", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "azure-east-us", "name": "Azure East US (Virginia)", "operator": "Azure", "latitude": 37.3719, "longitude": -79.8164, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 2000.0, "capacity_use": "Azure East US region", "address": null, "country": "USA", "region": "Boydton, VA", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "azure-west-us-2", "name": "Azure West US 2 (Quincy)", "operator": "Azure", "latitude": 47.2343, "longitude": -119.8526, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 1200.0, "capacity_use": "Azure West US 2 region", "address": null, "country": "USA", "region": "Quincy, WA", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "azure-north-europe", "name": "Azure North Europe (Dublin)", "operator": "Azure", "latitude": 53.3498, "longitude": -6.2603, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 900.0, "capacity_use": "Azure North Europe region", "address": null, "country": "Ireland", "region": "Dublin", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "azure-west-europe", "name": "Azure West Europe (Amsterdam)", "operator": "Azure", "latitude": 52.3676, "longitude": 4.9041, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 850.0, "capacity_use": "Azure West Europe region", "address": null, "country": "Netherlands", "region": "Amsterdam", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "azure-southeast-asia", "name": "Azure Southeast Asia (Singapore)", "operator": "Azure", "latitude": 1.3521, "longitude": 103.8198, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "Azure Southeast Asia region", "address": null, "country": "Singapore", "region": "Singapore", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "azure-mt-pleasant-wi", "name": "Azure Mt. Pleasant (Wisconsin)", "operator": "Azure", "latitude": 42.7261, "longitude": -87.9168, "status": "under_construction", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 700.0, "capacity_use": "Future Azure capacity expansion", "address": null, "country": "USA", "region": "Mt. Pleasant, WI", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://news.microsoft.com/source/features/digital-transformation/microsoft-wisconsin-datacenter/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "gcp-us-central1", "name": "GCP us-central1 (Iowa)", "operator": "GCP", "latitude": 41.2619, "longitude": -95.8608, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 1000.0, "capacity_use": "GCP us-central1 region", "address": null, "country": "USA", "region": "Council Bluffs, IA", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://cloud.google.com/about/locations\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "gcp-us-east1", "name": "GCP us-east1 (South Carolina)", "operator": "GCP", "latitude": 33.8361, "longitude": -81.1637, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 850.0, "capacity_use": "GCP us-east1 region", "address": null, "country": "USA", "region": "Moncks Corner, SC", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://cloud.google.com/about/locations\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "gcp-europe-west1", "name": "GCP europe-west1 (Belgium)", "operator": "GCP", "latitude": 50.4674, "longitude": 3.8203, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 600.0, "capacity_use": "GCP europe-west1 region", "address": null, "country": "Belgium", "region": "Saint-Ghislain", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://cloud.google.com/about/locations\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "gcp-asia-east1", "name": "GCP asia-east1 (Taiwan)", "operator": "GCP", "latitude": 24.0518, "longitude": 120.5161, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "GCP asia-east1 region", "address": null, "country": "Taiwan", "region": "Changhua County", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://cloud.google.com/about/locations\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "gcp-asia-northeast1", "name": "GCP asia-northeast1 (Tokyo)", "operator": "GCP", "latitude": 35.6762, "longitude": 139.6503, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 450.0, "capacity_use": "GCP asia-northeast1 region", "address": null, "country": "Japan", "region": "Tokyo", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://cloud.google.com/about/locations\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "meta-prineville-or", "name": "Meta Prineville", "operator": "Meta", "latitude": 44.2901, "longitude": -120.8307, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 400.0, "capacity_use": "Meta global infrastructure (Facebook, Instagram, WhatsApp)", "address": null, "country": "USA", "region": "Prineville, OR", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "meta-forest-city-nc", "name": "Meta Forest City", "operator": "Meta", "latitude": 35.3343, "longitude": -81.8662, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 300.0, "capacity_use": "Meta global infrastructure", "address": null, "country": "USA", "region": "Forest City, NC", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "meta-lulea-se", "name": "Meta Luleå", "operator": "Meta", "latitude": 65.5848, "longitude": 22.1567, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 250.0, "capacity_use": "Meta global infrastructure", "address": null, "country": "Sweden", "region": "Luleå", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "meta-clonee-ie", "name": "Meta Clonee", "operator": "Meta", "latitude": 53.4106, "longitude": -6.4197, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 280.0, "capacity_use": "Meta global infrastructure", "address": null, "country": "Ireland", "region": "Clonee", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "meta-richland-parish-la", "name": "Meta Richland Parish", "operator": "Meta", "latitude": 32.4099, "longitude": -91.757, "status": "under_construction", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 2000.0, "capacity_use": "Meta AI training capacity — Llama and successors", "address": null, "country": "USA", "region": "Richland Parish, LA", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://about.fb.com/news/2024/12/new-data-center-richland-parish-louisiana/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "oci-us-ashburn-1", "name": "OCI us-ashburn-1", "operator": "Oracle", "latitude": 39.0438, "longitude": -77.4874, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 350.0, "capacity_use": "OCI us-ashburn-1 region", "address": null, "country": "USA", "region": "Ashburn, VA", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://www.oracle.com/cloud/data-regions/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "oci-uk-london-1", "name": "OCI uk-london-1", "operator": "Oracle", "latitude": 51.5074, "longitude": -0.1278, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 250.0, "capacity_use": "OCI uk-london-1 region", "address": null, "country": "UK", "region": "London", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://www.oracle.com/cloud/data-regions/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "apple-maiden-nc", "name": "Apple Maiden iCloud", "operator": "Apple", "latitude": 35.5817, "longitude": -81.2095, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 200.0, "capacity_use": "iCloud, Siri, App Store backend", "address": null, "country": "USA", "region": "Maiden, NC", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://www.apple.com/environment/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "apple-reno-nv", "name": "Apple Reno", "operator": "Apple", "latitude": 39.5296, "longitude": -119.8138, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 150.0, "capacity_use": "iCloud and services backend", "address": null, "country": "USA", "region": "Reno, NV", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://www.apple.com/environment/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "apple-waukee-ia", "name": "Apple Waukee", "operator": "Apple", "latitude": 41.6125, "longitude": -93.8819, "status": "under_construction", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 400.0, "capacity_use": "Apple services expansion", "address": null, "country": "USA", "region": "Waukee, IA", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://www.apple.com/newsroom/2017/08/apple-to-build-data-center-in-iowa-investing-in-community/\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "bytedance-hamina-fi", "name": "ByteDance Hamina", "operator": "ByteDance", "latitude": 60.5693, "longitude": 27.1972, "status": "under_construction", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 600.0, "capacity_use": "TikTok European user data (Project Clover)", "address": null, "country": "Finland", "region": "Hamina", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[\"https://newsroom.tiktok.com/en-eu/project-clover-update\"]", "confidence": "high", "last_updated": "2026-05-11T20:46:55.276029+00:00"}, {"id": "bytedance-johor-my", "name": "ByteDance Johor", "operator": "ByteDance", "latitude": 1.4927, "longitude": 103.7414, "status": "planned", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "TikTok Southeast Asia capacity", "address": null, "country": "Malaysia", "region": "Johor", "primary_image_url": null, "primary_image_local_path": null, "source_urls": "[]", "confidence": "low", "last_updated": "2026-05-11T20:46:55.276029+00:00"}];
+</script>
+<script>/* globe.js — interactive datacenter globe.
+   Data is injected as window.__DC_DATA__ by the build step.
+*/
+
+const STATUS_COLOR = {
+  operational: "#3fb950",
+  under_construction: "#f0b429",
+  planned: "#4cc2ff",
+  retired: "#f85149",
+};
+
+const STATUS_LABEL = {
+  operational: "Operational",
+  under_construction: "Under construction",
+  planned: "Planned",
+  retired: "Retired",
+};
+
+const state = {
+  data: window.__DC_DATA__ || [],
+  filteredOperators: new Set(),
+  filteredStatuses: new Set(["operational", "under_construction", "planned"]),
+  search: "",
+};
+
+function visiblePoints() {
+  const q = state.search.trim().toLowerCase();
+  return state.data.filter(d => {
+    if (state.filteredOperators.size && !state.filteredOperators.has(d.operator)) return false;
+    if (!state.filteredStatuses.has(d.status)) return false;
+    if (q) {
+      const hay = `${d.name} ${d.operator} ${d.country || ""} ${d.region || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function updateKPIs() {
+  const pts = visiblePoints();
+  const total = pts.length;
+  const totalMW = pts.reduce((s, d) => s + (d.capacity_mw || 0), 0);
+  const construction = pts.filter(d => d.status === "under_construction").length;
+  document.getElementById("kpi-count").textContent = total.toLocaleString();
+  document.getElementById("kpi-mw").textContent = totalMW.toLocaleString() + " MW";
+  const pct = total ? Math.round((construction / total) * 100) : 0;
+  document.getElementById("kpi-construction").textContent = `${construction} (${pct}%)`;
+}
+
+function refreshGlobe() {
+  globe.pointsData(visiblePoints());
+  updateKPIs();
+}
+
+function fmtDate(s) {
+  if (!s) return "—";
+  try { return new Date(s).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); }
+  catch { return s; }
+}
+
+function openDetail(dc) {
+  const panel = document.getElementById("detail-panel");
+  const hero = panel.querySelector(".hero");
+  if (dc.primary_image_url) {
+    hero.style.backgroundImage = `url("${dc.primary_image_url}")`;
+    hero.textContent = "";
+  } else if (dc.primary_image_local_path) {
+    hero.style.backgroundImage = `url("${dc.primary_image_local_path}")`;
+    hero.textContent = "";
+  } else {
+    hero.style.backgroundImage = "";
+    hero.textContent = "(no photo yet)";
+  }
+
+  panel.querySelector(".dc-name").textContent = dc.name;
+  panel.querySelector(".dc-subtitle").innerHTML =
+    `${dc.operator} · ${dc.region || dc.country || "—"} ` +
+    `<span class="badge ${dc.status}">${STATUS_LABEL[dc.status] || dc.status}</span>`;
+
+  const rows = panel.querySelector(".rows");
+  rows.innerHTML = "";
+  const addRow = (k, v) => {
+    if (v === null || v === undefined || v === "") return;
+    const r = document.createElement("div");
+    r.className = "row";
+    r.innerHTML = `<span class="k">${k}</span><span class="v">${v}</span>`;
+    rows.appendChild(r);
+  };
+  addRow("Operator", dc.operator);
+  addRow("Location", [dc.region, dc.country].filter(Boolean).join(", "));
+  addRow("Coordinates", `${dc.latitude.toFixed(3)}, ${dc.longitude.toFixed(3)}`);
+  addRow("Confidence", dc.confidence || "—");
+
+  // Capacity
+  const gauge = panel.querySelector(".capacity-gauge");
+  if (dc.capacity_mw) {
+    gauge.style.display = "block";
+    gauge.querySelector(".mw").textContent = `${dc.capacity_mw.toLocaleString()} MW`;
+    gauge.querySelector(".label").textContent = dc.capacity_use || "Capacity";
+  } else {
+    gauge.style.display = "none";
+  }
+
+  // Timeline
+  const tl = panel.querySelector(".timeline");
+  tl.innerHTML = "";
+  const isDone = (s) => dc.status === "operational" || dc.status === "retired" || s === "construction_start_date" || (dc.status === "under_construction" && s === "construction_start_date");
+  const addStep = (k, dateField, current = false) => {
+    const v = fmtDate(dc[dateField]);
+    const cls = current ? "current" : (dc[dateField] ? "done" : "");
+    tl.innerHTML += `<div class="step ${cls}"><span class="dot"></span><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  };
+  addStep("Construction start", "construction_start_date");
+  if (dc.status === "under_construction" || dc.status === "planned") {
+    addStep("Expected completion", "expected_completion_date", true);
+  } else {
+    addStep("Completed", "actual_completion_date");
+  }
+  if (dc.build_duration_months) {
+    tl.innerHTML += `<div class="step"><span class="dot"></span><span class="k">Build duration</span><span class="v">${dc.build_duration_months.toFixed(1)} months</span></div>`;
+  }
+
+  // Sources
+  const sources = panel.querySelector(".sources");
+  sources.innerHTML = "";
+  let urls = [];
+  try { urls = JSON.parse(dc.source_urls || "[]"); } catch {}
+  if (Array.isArray(urls) && urls.length) {
+    urls.forEach(u => {
+      const a = document.createElement("a");
+      a.href = u; a.target = "_blank"; a.rel = "noopener"; a.textContent = u;
+      sources.appendChild(a);
+    });
+  } else {
+    sources.innerHTML = `<span style="color:var(--text-dim)">No sources yet</span>`;
+  }
+
+  panel.classList.add("open");
+
+  // Fly the camera to the point
+  globe.pointOfView({ lat: dc.latitude, lng: dc.longitude, altitude: 1.5 }, 800);
+}
+
+function closeDetail() {
+  document.getElementById("detail-panel").classList.remove("open");
+}
+
+// ---------- Globe setup ----------
+const globe = Globe()
+  (document.getElementById("globe-container"))
+  .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
+  .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
+  .backgroundColor("#0a0e14")
+  .pointAltitude(d => Math.max(0.01, Math.min(0.06, (d.capacity_mw || 100) / 40000)))
+  .pointRadius(d => 0.25 + Math.min(0.6, (d.capacity_mw || 100) / 4000))
+  .pointColor(d => STATUS_COLOR[d.status] || "#888")
+  .pointLabel(d => `
+    <div style="background:#11161f;border:1px solid #232a37;padding:8px 10px;border-radius:6px;font-family:sans-serif;font-size:12px;color:#e6edf3;max-width:260px">
+      <div style="font-weight:600;margin-bottom:2px">${d.name}</div>
+      <div style="color:#8b97a8">${d.operator} · ${STATUS_LABEL[d.status] || d.status}</div>
+      ${d.capacity_mw ? `<div style="color:#4cc2ff;margin-top:4px">${d.capacity_mw.toLocaleString()} MW</div>` : ""}
+    </div>
+  `)
+  .onPointClick(d => openDetail(d))
+  .atmosphereColor("#4cc2ff")
+  .atmosphereAltitude(0.15);
+
+// Auto-rotate gently until first user interaction
+globe.controls().autoRotate = true;
+globe.controls().autoRotateSpeed = 0.35;
+document.getElementById("globe-container").addEventListener("mousedown", () => {
+  globe.controls().autoRotate = false;
+}, { once: true });
+
+// ---------- Filter UI ----------
+function buildFilters() {
+  const operators = [...new Set(state.data.map(d => d.operator))].sort();
+  const opBox = document.getElementById("filter-operators");
+  opBox.innerHTML = "";
+  operators.forEach(op => {
+    const id = `op-${op.replace(/\s+/g, "-")}`;
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" id="${id}" checked /><span>${op}</span>`;
+    opBox.appendChild(label);
+    label.querySelector("input").addEventListener("change", e => {
+      if (e.target.checked) state.filteredOperators.delete(op);
+      else state.filteredOperators.add(op);
+      // We invert: an empty set means "all operators"
+      // Rebuild as: keep set of allowed operators
+      const allowed = operators.filter(o => document.getElementById(`op-${o.replace(/\s+/g, "-")}`).checked);
+      state.filteredOperators = new Set(allowed.length === operators.length ? [] : allowed);
+      refreshGlobe();
+    });
+  });
+
+  const statuses = ["operational", "under_construction", "planned"];
+  const stBox = document.getElementById("filter-statuses");
+  stBox.innerHTML = "";
+  statuses.forEach(st => {
+    const id = `st-${st}`;
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" id="${id}" checked />
+      <span class="dot" style="background:${STATUS_COLOR[st]}"></span>
+      <span>${STATUS_LABEL[st]}</span>`;
+    stBox.appendChild(label);
+    label.querySelector("input").addEventListener("change", e => {
+      if (e.target.checked) state.filteredStatuses.add(st);
+      else state.filteredStatuses.delete(st);
+      refreshGlobe();
+    });
+  });
+}
+
+document.getElementById("search").addEventListener("input", e => {
+  state.search = e.target.value;
+  refreshGlobe();
+});
+
+document.getElementById("close-detail").addEventListener("click", closeDetail);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+
+// Init
+buildFilters();
+refreshGlobe();
+</script>
+</body>
+</html>

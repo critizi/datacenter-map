@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Datacenter Map</title>
+<meta name="description" content="Interactive 3D globe of the world's data centers — capacity, status, build timelines." />
+<style>__INLINE_CSS__</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">Datacenter<span class="accent">Map</span></div>
+  <div class="kpi-strip">
+    <div class="kpi"><span class="v" id="kpi-count">0</span><span class="l">sites</span></div>
+    <div class="kpi"><span class="v" id="kpi-mw">0 MW</span><span class="l">total</span></div>
+    <div class="kpi"><span class="v" id="kpi-construction">0</span><span class="l">under construction</span></div>
+  </div>
+  <input id="search" class="search-box" placeholder="Search operator, country, region…" />
+</div>
+
+<div class="filters">
+  <div class="group">
+    <h4>Status</h4>
+    <div id="filter-statuses"></div>
+  </div>
+  <div class="group">
+    <h4>Operator</h4>
+    <div id="filter-operators"></div>
+  </div>
+</div>
+
+<div id="globe-container"></div>
+
+<aside class="detail-panel" id="detail-panel">
+  <button class="close" id="close-detail" title="Close (Esc)">×</button>
+  <div class="hero">(no photo yet)</div>
+  <div class="body">
+    <h2 class="dc-name">—</h2>
+    <div class="subtitle dc-subtitle">—</div>
+
+    <div class="section-title">Capacity</div>
+    <div class="capacity-gauge"><div class="mw">—</div><div class="label">—</div></div>
+
+    <div class="section-title">Build timeline</div>
+    <div class="timeline"></div>
+
+    <div class="section-title">Details</div>
+    <div class="rows"></div>
+
+    <div class="section-title">Sources</div>
+    <div class="sources"></div>
+  </div>
+</aside>
+
+<div class="footer-credit">
+  Built with <a href="https://globe.gl" target="_blank" rel="noopener">Globe.gl</a> ·
+  Data last refreshed __BUILD_DATE__
+</div>
+
+<script src="//unpkg.com/three@0.158.0/build/three.min.js"></script>
+<script src="//unpkg.com/globe.gl"></script>
+<script>
+window.__DC_DATA__ = __DC_DATA_JSON__;
+</script>
+<script>__INLINE_JS__</script>
+</body>
+</html>
