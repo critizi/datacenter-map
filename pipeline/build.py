@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,6 +21,12 @@ ROOT = Path(__file__).resolve().parent.parent
 FRONTEND = ROOT / "frontend"
 DIST = ROOT / "dist"
 IMAGES_SRC = ROOT / "data" / "images"
+
+_COUNTRIES_URL = (
+    "https://raw.githubusercontent.com/vasturiano/globe.gl/master"
+    "/example/datasets/ne_110m_admin_0_countries.geojson"
+)
+_COUNTRIES_CACHE = ROOT / "data" / "countries.geojson"
 
 
 def load_records() -> list[dict]:
@@ -60,6 +67,13 @@ def render(records: list[dict]) -> str:
             .replace("__BUILD_DATE__", build_date))
 
 
+def ensure_countries_geojson() -> None:
+    if not _COUNTRIES_CACHE.exists():
+        print("Downloading countries GeoJSON…")
+        urllib.request.urlretrieve(_COUNTRIES_URL, _COUNTRIES_CACHE)
+    shutil.copy(_COUNTRIES_CACHE, DIST / "countries.geojson")
+
+
 def write_dist(html: str, records: list[dict]) -> None:
     DIST.mkdir(parents=True, exist_ok=True)
     (DIST / "index.html").write_text(html, encoding="utf-8")
@@ -67,6 +81,7 @@ def write_dist(html: str, records: list[dict]) -> None:
         json.dumps(records, default=str, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    ensure_countries_geojson()
     # Copy locally cached images, if any
     if IMAGES_SRC.exists():
         dest = DIST / "images"

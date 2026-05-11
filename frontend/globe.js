@@ -149,6 +149,22 @@ function closeDetail() {
   document.getElementById("detail-panel").classList.remove("open");
 }
 
+// ---------- Country polygons ----------
+function loadCountries() {
+  fetch("countries.geojson")
+    .then(r => r.json())
+    .then(data => {
+      globe
+        .polygonsData(data.features)
+        .polygonCapColor(() => "rgba(12, 22, 44, 0.55)")
+        .polygonSideColor(() => "rgba(30, 60, 120, 0.12)")
+        .polygonStrokeColor(() => "#1e3d6e")
+        .polygonAltitude(0.001)
+        .polygonLabel(d => `<div style="background:#11161f;border:1px solid #232a37;padding:4px 8px;border-radius:4px;font-family:sans-serif;font-size:11px;color:#8b97a8">${d.properties.NAME || d.properties.name || ""}</div>`);
+    })
+    .catch(() => {}); // silently skip if file not present locally
+}
+
 // ---------- Globe setup ----------
 let globe;
 try {
@@ -186,6 +202,8 @@ try {
   document.getElementById("globe-container").addEventListener("mousedown", () => {
     globe.controls().autoRotate = false;
   }, { once: true });
+
+  loadCountries();
 
   // Three.js starfield injected into the globe's scene
   if (typeof THREE !== "undefined") {
