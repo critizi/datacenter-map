@@ -3,37 +3,69 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Datacenter Map</title>
-<meta name="description" content="Interactive 3D globe of the world's data centers — capacity, status, build timelines." />
-<style>:root {
-  --bg: #0a0e14;
-  --panel: #11161f;
-  --panel-2: #161c27;
-  --border: #232a37;
-  --text: #e6edf3;
-  --text-dim: #8b97a8;
-  --accent: #4cc2ff;
-  --green: #3fb950;
-  --yellow: #f0b429;
-  --blue: #4cc2ff;
-  --red: #f85149;
+<title>Datacenter Map — Hyperscaler Capacity Intelligence</title>
+<meta name="description" content="3D research map of hyperscaler datacenter capacity — MW, status, build timelines, and named tenants behind the power." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<style>/* Datacenter Map — investor-grade redesign
+ * Palette: Bloomberg amber on warm near-black. Inter UI + IBM Plex Mono numerics.
+ */
+
+:root {
+  /* Surfaces */
+  --bg:        #0b0d10;
+  --panel:     #13161b;
+  --panel-2:   #1a1e25;
+  --panel-3:   #21262e;
+  --hairline:  #262b34;
+  --hairline-soft: #1d2128;
+
+  /* Text */
+  --text:      #e8e6e3;
+  --text-dim:  #8a8f99;
+  --text-mute: #5d626c;
+
+  /* Accent */
+  --accent:    #d4a017;
+  --accent-2:  #b88812;
+  --accent-soft: rgba(212, 160, 23, 0.12);
+
+  /* Status — desaturated for restraint */
+  --green:     #4f9e58;
+  --amber:     #d4a017;
+  --blue:      #5b87b8;
+  --red:       #c14b46;
+
+  /* Typography */
+  --font-ui:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono:  "IBM Plex Mono", ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
 
 html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0; padding: 0; height: 100%;
+  font-family: var(--font-ui);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
 }
 
+/* Tabular numerics everywhere that shows a number */
+.mono, .m-v, .mg-v, .cap-mw, .ticker-chip,
+.hero-metrics .delta, .row .v, .timeline .v {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Top bar ---------- */
+
 #globe-container {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
 }
 
 .topbar {
@@ -41,311 +73,950 @@ html, body {
   top: 0; left: 0; right: 0;
   z-index: 10;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  background: linear-gradient(180deg, rgba(10,14,20,0.9) 0%, rgba(10,14,20,0) 100%);
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px 22px 18px;
+  background: linear-gradient(180deg, rgba(11,13,16,0.92) 0%, rgba(11,13,16,0.55) 70%, rgba(11,13,16,0) 100%);
   pointer-events: none;
 }
 .topbar > * { pointer-events: auto; }
 
 .brand {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  margin-right: 8px;
-}
-.brand .accent { color: var(--accent); }
-
-.kpi-strip {
   display: flex;
-  gap: 16px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 12px;
+  align-items: center;
+  gap: 10px;
+  padding-right: 18px;
+  border-right: 1px solid var(--hairline-soft);
+  min-height: 44px;
 }
-.kpi-strip .kpi { display: flex; gap: 6px; align-items: baseline; }
-.kpi-strip .kpi .v { font-weight: 600; color: var(--text); }
-.kpi-strip .kpi .l { color: var(--text-dim); }
+.brand .wm {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--text);
+  white-space: nowrap;
+}
+.brand .wm .wm-accent { color: var(--accent); }
+.brand .brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  border: 1px solid var(--hairline);
+  background: var(--panel);
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.hero-metrics {
+  display: flex;
+  gap: 0;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: 44px;
+}
+.hero-metrics .metric {
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 4px 18px;
+  border-right: 1px solid var(--hairline-soft);
+  min-width: 110px;
+}
+.hero-metrics .metric:last-child { border-right: 0; }
+.hero-metrics .m-v {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.1;
+}
+.hero-metrics .m-l {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.hero-metrics .metric.accent .m-v { color: var(--accent); }
 
 .search-box {
   flex: 1;
   max-width: 320px;
   margin-left: auto;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 0 12px;
   color: var(--text);
-  font-size: 13px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
   outline: none;
+  min-height: 44px;
 }
+.search-box::placeholder { color: var(--text-mute); }
 .search-box:focus { border-color: var(--accent); }
+
+/* ---------- Filters rail ---------- */
 
 .filters {
   position: absolute;
-  top: 70px;
-  left: 20px;
+  top: 84px;
+  left: 22px;
   z-index: 10;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 12px;
-  min-width: 200px;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 14px 14px 12px;
+  font-size: 11.5px;
+  min-width: 220px;
+  max-width: 260px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
 }
 .filters h4 {
   margin: 0 0 8px 0;
-  font-size: 11px;
+  font-size: 9.5px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.14em;
   color: var(--text-dim);
 }
-.filters .group { margin-bottom: 12px; }
+.filters .group { margin-bottom: 14px; }
 .filters .group:last-child { margin-bottom: 0; }
-.filters label {
-  display: flex;
+
+.pill-row {
+  display: flex; flex-wrap: wrap;
+  gap: 5px;
+}
+.pill {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--text-dim);
   cursor: pointer;
   user-select: none;
+  transition: all 120ms ease;
+  white-space: nowrap;
 }
-.filters label:hover { color: var(--accent); }
-.filters input[type="checkbox"] { accent-color: var(--accent); }
-.filters .dot {
+.pill:hover { color: var(--text); border-color: var(--text-mute); }
+.pill.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.pill .dot {
   display: inline-block;
-  width: 8px; height: 8px;
+  width: 7px; height: 7px;
   border-radius: 50%;
 }
+.pill .count {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-mute);
+}
+.pill.active .count { color: var(--accent); }
+
+.parent-group {
+  margin-bottom: 8px;
+}
+.parent-group:last-child { margin-bottom: 0; }
+.parent-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* ---------- Detail (tear sheet) panel ---------- */
 
 .detail-panel {
   position: absolute;
   top: 0; right: 0;
-  width: 420px;
+  width: 440px;
   height: 100%;
   background: var(--panel);
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--hairline);
   transform: translateX(100%);
-  transition: transform 200ms ease-out;
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1);
   z-index: 20;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 .detail-panel.open { transform: translateX(0); }
 
 .detail-panel .close {
-  position: absolute; top: 10px; right: 14px;
-  background: transparent; border: 0; color: var(--text-dim);
-  font-size: 22px; cursor: pointer;
+  position: absolute; top: 12px; right: 14px;
+  background: transparent; border: 0;
+  color: var(--text-dim);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
 }
 .detail-panel .close:hover { color: var(--text); }
+
+.panel-header {
+  padding: 18px 22px 0;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--panel);
+}
+.panel-header .ph-name h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  padding-right: 32px;
+  line-height: 1.25;
+}
+.panel-header .ph-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 14px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.panel-header .ph-meta .dc-operator {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.ticker-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--panel-2);
+  border: 1px solid var(--hairline);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-decoration: none;
+}
+.ticker-chip:hover { border-color: var(--accent); }
+.ticker-chip.private {
+  color: var(--text-dim);
+  border-color: var(--hairline);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--font-ui);
+}
+.badge::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge.operational        { background: rgba(79,158,88,0.13);  color: var(--green); }
+.badge.under_construction { background: rgba(212,160,23,0.13); color: var(--amber); }
+.badge.planned            { background: rgba(91,135,184,0.13); color: var(--blue); }
+.badge.retired            { background: rgba(193,75,70,0.13);  color: var(--red); }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+  border-bottom: 0;
+}
+.tab {
+  background: transparent;
+  border: 0;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+}
+.tab-pane { padding: 0 0 28px 0; }
+.tab-pane[hidden] { display: none; }
 
 .detail-panel .hero {
   width: 100%;
   height: 200px;
   background: var(--panel-2);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-dim);
-  font-size: 12px;
   background-size: cover;
   background-position: center;
+  border-bottom: 1px solid var(--hairline);
+  display: flex; align-items: flex-end;
+  position: relative;
+}
+.detail-panel .hero.empty::after {
+  content: "NO IMAGERY";
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--text-mute);
 }
 
-.detail-panel .body { padding: 18px 22px; }
-.detail-panel h2 { margin: 0 0 4px 0; font-size: 18px; }
-.detail-panel .subtitle { color: var(--text-dim); font-size: 12px; margin-bottom: 16px; }
-.detail-panel .badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
+/* Metric grid in overview */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+.metric-grid .mg-cell {
+  background: var(--panel);
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 64px;
+}
+.metric-grid .mg-v {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.1;
+}
+.metric-grid .mg-v.accent { color: var(--accent); }
+.metric-grid .mg-v.dim { color: var(--text-dim); }
+.metric-grid .mg-l {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.metric-grid .mg-cell.compact .mg-v { font-size: 13px; }
+
+/* Sections inside tabs */
+.tab-pane > .section-title,
+.tab-pane > .tenant-chips,
+.tab-pane > .commitments-callout,
+.tab-pane > .capacity-use-text,
+.tab-pane > .cap-bar,
+.tab-pane > .timeline,
+.tab-pane > .rows,
+.tab-pane > .sources {
+  margin-left: 22px;
+  margin-right: 22px;
+}
+
+.section-title {
+  font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-.badge.operational { background: rgba(63,185,80,0.15); color: var(--green); }
-.badge.under_construction { background: rgba(240,180,41,0.15); color: var(--yellow); }
-.badge.planned { background: rgba(76,194,255,0.15); color: var(--blue); }
-.badge.retired { background: rgba(248,81,73,0.15); color: var(--red); }
-
-.detail-panel .row {
-  display: flex; justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-.detail-panel .row .k { color: var(--text-dim); }
-.detail-panel .row .v { color: var(--text); text-align: right; max-width: 60%; }
-
-.detail-panel .section-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.14em;
   color: var(--text-dim);
-  margin: 18px 0 8px;
+  margin: 20px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--hairline-soft);
 }
 
-.capacity-gauge {
+/* Capacity bar */
+.cap-bar {
   background: var(--panel-2);
-  border-radius: 6px;
-  padding: 12px;
-  margin-top: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  height: 30px;
+  position: relative;
+  overflow: hidden;
 }
-.capacity-gauge .mw {
-  font-size: 26px;
+.cap-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 100%);
+  width: 0%;
+  transition: width 320ms cubic-bezier(.2,.7,.2,1);
+}
+.cap-bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text);
+  z-index: 1;
+}
+.cap-bar-label .cb-pct { color: var(--text); font-weight: 600; }
+.cap-bar-label .cb-ref { color: var(--text-dim); }
+
+/* Tenant chips */
+.tenant-chips {
+  display: flex; flex-wrap: wrap;
+  gap: 6px;
+}
+.tenant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  font-size: 11.5px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.tenant-chip:hover { border-color: var(--accent); }
+.tenant-chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.tenant-chip .tc-dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.tenant-chip .tc-workload {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tenant-chips.empty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+.tenant-chips.empty::before {
+  content: "NO NAMED TENANTS IN SOURCES";
+}
+
+/* Commitments callout */
+.commitments-callout {
+  margin-top: 10px;
+  background: var(--panel-2);
+  border-left: 2px solid var(--accent);
+  padding: 10px 12px;
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.4;
+}
+.commitments-callout .cc-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.commitments-callout .cc-item {
+  display: inline-block;
+  margin-right: 10px;
+}
+.commitments-callout .cc-item .cc-v {
+  font-family: var(--font-mono);
   font-weight: 600;
   color: var(--accent);
 }
-.capacity-gauge .label { font-size: 11px; color: var(--text-dim); }
 
+.capacity-use-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+/* Rows in build / details */
+.rows .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+  font-size: 12px;
+}
+.rows .row:last-child { border-bottom: 0; }
+.rows .row .k {
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+.rows .row .v {
+  color: var(--text);
+  text-align: right;
+  max-width: 60%;
+  font-size: 12px;
+}
+
+/* Timeline */
 .timeline {
   background: var(--panel-2);
-  border-radius: 6px;
-  padding: 12px;
-  margin-top: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  padding: 12px 14px;
   font-size: 12px;
 }
 .timeline .step {
-  display: flex; gap: 10px; align-items: center;
-  padding: 4px 0;
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
 }
+.timeline .step + .step { border-top: 1px solid var(--hairline-soft); }
 .timeline .step .dot {
   width: 8px; height: 8px; border-radius: 50%;
-  background: var(--border);
+  background: var(--hairline);
+  border: 1px solid var(--text-mute);
+  margin-left: 3px;
 }
-.timeline .step.done .dot { background: var(--green); }
-.timeline .step.current .dot { background: var(--yellow); }
-.timeline .step .k { color: var(--text-dim); width: 110px; }
-.timeline .step .v { color: var(--text); }
+.timeline .step.done .dot   { background: var(--green); border-color: var(--green); }
+.timeline .step.current .dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(212,160,23,0.18);
+}
+.timeline .step .k {
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.timeline .step .v {
+  color: var(--text);
+  font-size: 11.5px;
+}
 
+/* Sources */
 .sources {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 6px;
   font-size: 12px;
 }
-.sources a {
-  display: block;
-  color: var(--accent);
+.sources .src-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
   text-decoration: none;
-  padding: 4px 0;
-  word-break: break-all;
+  color: var(--text);
+  transition: border-color 120ms ease;
 }
-.sources a:hover { text-decoration: underline; }
+.sources .src-row:hover { border-color: var(--accent); }
+.sources .src-host {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 500;
+}
+.sources .src-path {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-dim);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+.sources .src-empty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-mute);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
+/* Footer datapoint strip */
 .footer-credit {
   position: absolute;
-  bottom: 8px; left: 12px;
-  font-size: 10px;
-  color: var(--text-dim);
+  bottom: 0; left: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 22px;
+  background: linear-gradient(0deg, rgba(11,13,16,0.9) 0%, rgba(11,13,16,0) 100%);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-mute);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   z-index: 5;
+  pointer-events: none;
 }
-.footer-credit a { color: var(--text-dim); }
+.footer-credit a {
+  color: var(--text-mute);
+  text-decoration: none;
+  pointer-events: auto;
+}
+.footer-credit a:hover { color: var(--text-dim); }
+
+/* Scrollbars (WebKit) */
+.detail-panel ::-webkit-scrollbar,
+.panel-body::-webkit-scrollbar,
+.filters::-webkit-scrollbar {
+  width: 8px;
+}
+.detail-panel ::-webkit-scrollbar-thumb,
+.panel-body::-webkit-scrollbar-thumb,
+.filters::-webkit-scrollbar-thumb {
+  background: var(--panel-3);
+  border-radius: 4px;
+}
+.detail-panel ::-webkit-scrollbar-track,
+.panel-body::-webkit-scrollbar-track,
+.filters::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Globe tooltip (returned as HTML from globe.pointLabel) gets these inline,
+ * but keep these here as a safety net for any future class-based tooltips. */
+.gl-tooltip {
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--text);
+  max-width: 260px;
+}
+.gl-tooltip .gt-name { font-weight: 600; }
+.gl-tooltip .gt-meta { color: var(--text-dim); font-size: 10.5px; margin-top: 3px; }
+.gl-tooltip .gt-mw {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* Responsive ish — keep panel from eating small screens */
+@media (max-width: 900px) {
+  .detail-panel { width: 92vw; }
+  .hero-metrics .metric { padding: 4px 12px; min-width: 90px; }
+  .hero-metrics .m-v { font-size: 15px; }
+}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="brand">Datacenter<span class="accent">Map</span></div>
-  <div class="kpi-strip">
-    <div class="kpi"><span class="v" id="kpi-count">0</span><span class="l">sites</span></div>
-    <div class="kpi"><span class="v" id="kpi-mw">0 MW</span><span class="l">total</span></div>
-    <div class="kpi"><span class="v" id="kpi-construction">0</span><span class="l">under construction</span></div>
+  <div class="brand">
+    <span class="wm">DATACENTER<span class="wm-accent">·</span>MAP</span>
+    <span class="brand-tag" id="brand-tag">v1.0 · WK —</span>
   </div>
-  <input id="search" class="search-box" placeholder="Search operator, country, region…" />
+  <div class="hero-metrics" role="group" aria-label="Fleet summary">
+    <div class="metric"><span class="m-v" id="m-sites">0</span><span class="m-l">Sites tracked</span></div>
+    <div class="metric"><span class="m-v" id="m-mw">0</span><span class="m-l">Total MW</span></div>
+    <div class="metric accent"><span class="m-v" id="m-construction">0</span><span class="m-l">Under construction</span></div>
+    <div class="metric"><span class="m-v" id="m-operational">0</span><span class="m-l">Operational</span></div>
+  </div>
+  <input id="search" class="search-box" placeholder="Search operator, country, region, tenant…" autocomplete="off" spellcheck="false" />
 </div>
 
 <div class="filters">
   <div class="group">
     <h4>Status</h4>
-    <div id="filter-statuses"></div>
+    <div id="filter-statuses" class="pill-row"></div>
   </div>
   <div class="group">
     <h4>Operator</h4>
     <div id="filter-operators"></div>
   </div>
+  <div class="group">
+    <h4>Tenants <span style="color:var(--text-mute);font-weight:400;letter-spacing:0">— parsed from sources</span></h4>
+    <div id="filter-tenants" class="pill-row"></div>
+  </div>
 </div>
 
 <div id="globe-container"></div>
 
-<aside class="detail-panel" id="detail-panel">
-  <button class="close" id="close-detail" title="Close (Esc)">×</button>
-  <div class="hero">(no photo yet)</div>
-  <div class="body">
-    <h2 class="dc-name">—</h2>
-    <div class="subtitle dc-subtitle">—</div>
+<aside class="detail-panel" id="detail-panel" aria-hidden="true">
+  <button class="close" id="close-detail" title="Close (Esc)" aria-label="Close detail panel">×</button>
 
-    <div class="section-title">Capacity</div>
-    <div class="capacity-gauge"><div class="mw">—</div><div class="label">—</div></div>
+  <div class="panel-header">
+    <div class="ph-name">
+      <h2 class="dc-name">—</h2>
+      <div class="ph-meta">
+        <span class="dc-operator">—</span>
+        <span class="dc-ticker-wrap"></span>
+        <span class="dc-badge-wrap"></span>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="overview" role="tab">Overview</button>
+      <button class="tab" data-tab="tenants" role="tab">Tenants</button>
+      <button class="tab" data-tab="build" role="tab">Build</button>
+      <button class="tab" data-tab="sources" role="tab">Sources</button>
+    </div>
+  </div>
 
-    <div class="section-title">Build timeline</div>
-    <div class="timeline"></div>
+  <div class="panel-body">
 
-    <div class="section-title">Details</div>
-    <div class="rows"></div>
+    <div class="tab-pane" data-pane="overview">
+      <div class="hero empty" id="dc-hero"></div>
+      <div class="metric-grid">
+        <div class="mg-cell"><span class="mg-v accent" id="dc-mw">—</span><span class="mg-l">Capacity MW</span></div>
+        <div class="mg-cell"><span class="mg-v dim" id="dc-cpm">—</span><span class="mg-l">$/MW est · P4</span></div>
+        <div class="mg-cell compact"><span class="mg-v" id="dc-loc">—</span><span class="mg-l">Location</span></div>
+        <div class="mg-cell compact"><span class="mg-v" id="dc-conf">—</span><span class="mg-l">Confidence</span></div>
+      </div>
 
-    <div class="section-title">Sources</div>
-    <div class="sources"></div>
+      <div class="section-title">Capacity vs operator fleet max</div>
+      <div class="cap-bar">
+        <div class="cap-bar-fill" id="dc-capfill"></div>
+        <div class="cap-bar-label">
+          <span class="cb-pct" id="dc-cappct">—</span>
+          <span class="cb-ref" id="dc-capref">—</span>
+        </div>
+      </div>
+
+      <div class="section-title">Named tenants &amp; commitments</div>
+      <div class="tenant-chips empty" id="dc-tenants"></div>
+      <div class="commitments-callout" id="dc-commitments" style="display:none">
+        <span class="cc-label">Disclosed commitments</span>
+        <span class="cc-items" id="dc-commitments-items"></span>
+      </div>
+
+      <div class="section-title">Capacity &amp; use</div>
+      <div class="capacity-use-text" id="dc-use">—</div>
+    </div>
+
+    <div class="tab-pane" data-pane="tenants" hidden>
+      <div style="padding: 22px;">
+        <div class="section-title" style="margin-left:0;margin-right:0;margin-top:0">Tenant index</div>
+        <div class="tenant-chips empty" id="dc-tenants-large"></div>
+        <div style="margin-top:18px;padding:12px 14px;background:var(--panel-2);border:1px dashed var(--hairline);border-radius:3px;font-size:11.5px;color:var(--text-dim);line-height:1.5">
+          <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mute);display:block;margin-bottom:4px">Roadmap · Phase 2</span>
+          Structured tenant records — workload type, % share of facility, $ committed, evidence quote, source-level confidence — ship in the next data release. Tenants shown above are extracted heuristically from operator press releases.
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" data-pane="build" hidden>
+      <div class="section-title">Build timeline</div>
+      <div class="timeline" id="dc-timeline"></div>
+      <div class="section-title">Facility details</div>
+      <div class="rows" id="dc-rows"></div>
+    </div>
+
+    <div class="tab-pane" data-pane="sources" hidden>
+      <div class="section-title">Cited sources</div>
+      <div class="sources" id="dc-sources"></div>
+    </div>
+
   </div>
 </aside>
 
 <div class="footer-credit">
-  Built with <a href="https://globe.gl" target="_blank" rel="noopener">Globe.gl</a> ·
-  Data last refreshed 2026-05-11
+  <span>Data as of 2026-05-11</span>
+  <span>·</span>
+  <span><span id="fc-count">—</span> facilities tracked</span>
+  <span>·</span>
+  <span>Built with <a href="https://globe.gl" target="_blank" rel="noopener">Globe.gl</a></span>
 </div>
 
 <script src="//unpkg.com/three@0.158.0/build/three.min.js"></script>
 <script src="//unpkg.com/globe.gl@2.30.0/dist/globe.gl.min.js"></script>
 <script>
 window.__DC_DATA__ = [{"id": "aws-us-east-1", "name": "AWS us-east-1 (Northern Virginia)", "operator": "AWS", "latitude": 39.0438, "longitude": -77.4874, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 2600.0, "capacity_use": "AWS cloud (EC2/S3/Lambda/Bedrock) — primary home of Anthropic Claude. Amazon committed $4B to Anthropic (2023) with potential for $4B more; Anthropic runs Claude training and inference on AWS Trainium/Inferentia chips, principally in us-east-1. Largest single AWS region by deployed capacity.", "address": null, "country": "USA", "region": "Ashburn, VA", "primary_image_url": null, "primary_image_local_path": "images/aws-us-east-1.jpg", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "aws-us-west-2", "name": "AWS us-west-2 (Oregon)", "operator": "AWS", "latitude": 45.8399, "longitude": -119.7006, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 1500.0, "capacity_use": "AWS cloud (us-west-2) — secondary Anthropic inference region; Amazon Bedrock AI services; major hyperscale campus powered largely by hydroelectric and wind energy.", "address": null, "country": "USA", "region": "Boardman, OR", "primary_image_url": null, "primary_image_local_path": "images/aws-us-west-2.png", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "aws-us-east-2", "name": "AWS us-east-2 (Ohio)", "operator": "AWS", "latitude": 39.9612, "longitude": -82.9988, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 900.0, "capacity_use": "AWS cloud (us-east-2); redundant US East region for AWS AI services and Amazon Bedrock.", "address": null, "country": "USA", "region": "Columbus, OH", "primary_image_url": null, "primary_image_local_path": "images/aws-us-east-2.jpg", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "aws-eu-west-1", "name": "AWS eu-west-1 (Ireland)", "operator": "AWS", "latitude": 53.3498, "longitude": -6.2603, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 800.0, "capacity_use": "AWS cloud EU flagship region; Amazon Bedrock and Claude API available for GDPR-scoped EU workloads.", "address": null, "country": "Ireland", "region": "Dublin", "primary_image_url": null, "primary_image_local_path": "images/aws-eu-west-1.png", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "aws-eu-central-1", "name": "AWS eu-central-1 (Frankfurt)", "operator": "AWS", "latitude": 50.1109, "longitude": 8.6821, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 700.0, "capacity_use": "AWS cloud (Germany); GDPR/DSGVO compliance hub for European enterprise and AI workloads.", "address": null, "country": "Germany", "region": "Frankfurt", "primary_image_url": null, "primary_image_local_path": "images/aws-eu-central-1.jpg", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "aws-ap-northeast-1", "name": "AWS ap-northeast-1 (Tokyo)", "operator": "AWS", "latitude": 35.6762, "longitude": 139.6503, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 600.0, "capacity_use": "AWS cloud (Japan); largest APAC AWS region; serves Japanese AI/ML workloads and Amazon Bedrock Japan.", "address": null, "country": "Japan", "region": "Tokyo", "primary_image_url": null, "primary_image_local_path": "images/aws-ap-northeast-1.png", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "aws-ap-southeast-1", "name": "AWS ap-southeast-1 (Singapore)", "operator": "AWS", "latitude": 1.3521, "longitude": 103.8198, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "AWS cloud (Southeast Asia hub); Amazon Bedrock and AI services for ASEAN markets.", "address": null, "country": "Singapore", "region": "Singapore", "primary_image_url": null, "primary_image_local_path": "images/aws-ap-southeast-1.jpg", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "aws-sa-east-1", "name": "AWS sa-east-1 (São Paulo)", "operator": "AWS", "latitude": -23.5505, "longitude": -46.6333, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 350.0, "capacity_use": "AWS cloud (South America); only AWS region in Latin America; serves Brazilian and LatAm AI/cloud workloads.", "address": null, "country": "Brazil", "region": "São Paulo", "primary_image_url": null, "primary_image_local_path": "images/aws-sa-east-1.jpg", "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "azure-east-us", "name": "Azure East US (Virginia)", "operator": "Azure", "latitude": 37.3719, "longitude": -79.8164, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 2000.0, "capacity_use": "Microsoft Azure cloud + OpenAI (GPT-4, GPT-o1, o3 training and inference). Azure is OpenAI's exclusive cloud provider — Microsoft has committed $13B+ to OpenAI since 2019. This region hosts the largest concentration of OpenAI compute globally, powering ChatGPT, the OpenAI API, and Microsoft Copilot.", "address": null, "country": "USA", "region": "Boydton, VA", "primary_image_url": null, "primary_image_local_path": "images/azure-east-us.jpg", "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "azure-west-us-2", "name": "Azure West US 2 (Quincy)", "operator": "Azure", "latitude": 47.2343, "longitude": -119.8526, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 1200.0, "capacity_use": "Microsoft Azure cloud (West Coast); OpenAI inference for US West users; Microsoft Copilot AI services.", "address": null, "country": "USA", "region": "Quincy, WA", "primary_image_url": null, "primary_image_local_path": "images/azure-west-us-2.png", "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "azure-north-europe", "name": "Azure North Europe (Dublin)", "operator": "Azure", "latitude": 53.3498, "longitude": -6.2603, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 900.0, "capacity_use": "Microsoft Azure EU cloud; OpenAI inference for EU users (GDPR-compliant); Microsoft Copilot EU.", "address": null, "country": "Ireland", "region": "Dublin", "primary_image_url": null, "primary_image_local_path": "images/azure-north-europe.png", "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "azure-west-europe", "name": "Azure West Europe (Amsterdam)", "operator": "Azure", "latitude": 52.3676, "longitude": 4.9041, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 850.0, "capacity_use": "Microsoft Azure cloud (Netherlands); major European AI inference hub; OpenAI EU workloads.", "address": null, "country": "Netherlands", "region": "Amsterdam", "primary_image_url": null, "primary_image_local_path": "images/azure-west-europe.png", "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "azure-southeast-asia", "name": "Azure Southeast Asia (Singapore)", "operator": "Azure", "latitude": 1.3521, "longitude": 103.8198, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "Microsoft Azure APAC flagship; Microsoft Copilot and OpenAI API for Southeast Asia.", "address": null, "country": "Singapore", "region": "Singapore", "primary_image_url": "https://www.gstatic.com/marketing-cms/assets/images/21/04/f43823104859a23d1b45f3a84d1b/singapore-hero-2.jpg", "primary_image_local_path": "images/azure-southeast-asia.jpg", "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "azure-mt-pleasant-wi", "name": "Azure Fairwater (Mt. Pleasant, WI)", "operator": "Azure", "latitude": 42.7261, "longitude": -87.9168, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 700.0, "capacity_use": "Fairwater — Microsoft's purpose-built AI superfactory, opened 2026. Houses hundreds of thousands of NVIDIA H100/H200 GPUs in a two-story liquid-cooled configuration. Dedicated to OpenAI's next-generation model training at scale; Microsoft calls it 'the world's most powerful AI datacenter.' Part of $3.3B Wisconsin investment. Connected to a second identical campus in Atlanta as an AI superfactory cluster.", "address": null, "country": "USA", "region": "Mt. Pleasant, WI", "primary_image_url": "https://blogs.microsoft.com/wp-content/uploads/2025/09/OMB-Image-1-Datacenter.jpg", "primary_image_local_path": "images/azure-mt-pleasant-wi.jpg", "source_urls": "[\"https://news.microsoft.com/source/2024/05/08/microsoft-announces-3-3-billion-investment-in-wisconsin-to-spur-artificial-intelligence-innovation-and-economic-growth/\", \"https://blogs.microsoft.com/blog/2025/09/18/inside-the-worlds-most-powerful-ai-datacenter/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "gcp-us-central1", "name": "GCP us-central1 (Iowa)", "operator": "GCP", "latitude": 41.2619, "longitude": -95.8608, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 1000.0, "capacity_use": "Google Cloud + Google DeepMind (Gemini model training and inference). Google's flagship North American AI infrastructure hub; Vertex AI platform; Google's TPU supercomputers for Gemini Ultra/Pro training are concentrated here.", "address": null, "country": "USA", "region": "Council Bluffs, IA", "primary_image_url": "https://www.gstatic.com/marketing-cms/assets/images/36/a9/65a25c6f463fb493dbac5ba475bb/council-bluffs-hero.jpg", "primary_image_local_path": "images/gcp-us-central1.png", "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/iowa/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "gcp-us-east1", "name": "GCP us-east1 (South Carolina)", "operator": "GCP", "latitude": 33.8361, "longitude": -81.1637, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 850.0, "capacity_use": "Google Cloud (US East); major AI inference region for Gemini and Vertex AI; Google's South Carolina campus runs on 100% renewable energy.", "address": null, "country": "USA", "region": "Moncks Corner, SC", "primary_image_url": "https://www.gstatic.com/marketing-cms/assets/images/5b/62/f2ec72f24e5a9738a458f6b72c5c/dc-location-page-header-imagery-south-carolina.webp", "primary_image_local_path": "images/gcp-us-east1.jpg", "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/south-carolina/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "gcp-europe-west1", "name": "GCP europe-west1 (Belgium)", "operator": "GCP", "latitude": 50.4674, "longitude": 3.8203, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 600.0, "capacity_use": "Google Cloud EU flagship (St. Ghislain, Belgium); Gemini inference for European users; Vertex AI EU; Google's first European data center, operational since 2010.", "address": null, "country": "Belgium", "region": "Saint-Ghislain", "primary_image_url": "https://www.gstatic.com/marketing-cms/assets/images/02/71/924a39ac4e19badb460d745be842/st-ghislain-belgium-hero.jpg", "primary_image_local_path": "images/gcp-europe-west1.jpg", "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/belgium/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "gcp-asia-east1", "name": "GCP asia-east1 (Taiwan)", "operator": "GCP", "latitude": 24.0518, "longitude": 120.5161, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "Google Cloud (Taiwan); APAC AI inference hub for Gemini; Vertex AI for Greater China and NE Asia.", "address": null, "country": "Taiwan", "region": "Changhua County", "primary_image_url": "https://www.gstatic.com/marketing-cms/assets/images/62/9e/a83866944646bb64c130a1e483d2/changhua-county-taiwan-hero.jpg", "primary_image_local_path": "images/gcp-asia-east1.jpg", "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/taiwan/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "gcp-asia-northeast1", "name": "GCP asia-northeast1 (Tokyo)", "operator": "GCP", "latitude": 35.6762, "longitude": 139.6503, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 450.0, "capacity_use": "Google Cloud (Japan); Gemini and AI services for Japan and Northeast Asia; Google's Inzai, Chiba campus.", "address": null, "country": "Japan", "region": "Tokyo", "primary_image_url": null, "primary_image_local_path": "images/gcp-asia-northeast1.png", "source_urls": "[\"https://cloud.google.com/about/locations\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "meta-prineville-or", "name": "Meta Prineville", "operator": "Meta", "latitude": 44.2901, "longitude": -120.8307, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 400.0, "capacity_use": "Meta internal only — Facebook, Instagram, WhatsApp global infrastructure. Meta's first purpose-built hyperscale greenfield campus (opened 2011); pioneered the Open Compute Project (open-source server design). No third-party cloud tenants; all capacity serves Meta's own platforms.", "address": null, "country": "USA", "region": "Prineville, OR", "primary_image_url": "https://about.fb.com/wp-content/uploads/2015/05/prineville-data-center-exterior-4.jpg", "primary_image_local_path": "images/meta-prineville-or.png", "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "meta-forest-city-nc", "name": "Meta Forest City", "operator": "Meta", "latitude": 35.3343, "longitude": -81.8662, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 300.0, "capacity_use": "Meta internal — Facebook/Instagram/WhatsApp US East serving. One of Meta's oldest hyperscale facilities; 100% renewable energy.", "address": null, "country": "USA", "region": "Forest City, NC", "primary_image_url": null, "primary_image_local_path": "images/meta-forest-city-nc.jpg", "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "meta-lulea-se", "name": "Meta Luleå", "operator": "Meta", "latitude": 65.5848, "longitude": 22.1567, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 250.0, "capacity_use": "Meta internal — European social media infrastructure (Facebook/Instagram/WhatsApp EU). Cooled using Arctic air year-round; one of the world's most energy-efficient hyperscale facilities (PUE ~1.01). 100% renewable hydroelectric power.", "address": null, "country": "Sweden", "region": "Luleå", "primary_image_url": null, "primary_image_local_path": "images/meta-lulea-se.jpg", "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "meta-clonee-ie", "name": "Meta Clonee", "operator": "Meta", "latitude": 53.4106, "longitude": -6.4197, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 280.0, "capacity_use": "Meta internal — European data hub; Facebook/Instagram EU serving under GDPR. Meta's largest European campus.", "address": null, "country": "Ireland", "region": "Clonee", "primary_image_url": null, "primary_image_local_path": "images/meta-clonee-ie.png", "source_urls": "[\"https://datacenters.atmeta.com/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "meta-richland-parish-la", "name": "Meta Richland Parish", "operator": "Meta", "latitude": 32.4099, "longitude": -91.757, "status": "under_construction", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 2000.0, "capacity_use": "Meta AI training ONLY — dedicated exclusively to training Llama 4, Llama 5, and future open-source LLMs. Meta's largest facility ever: $10B investment, 2GW capacity, 4 million sq ft. No commercial cloud tenants — 100% Meta AI workloads. This is the clearest pure-play AI training infrastructure bet in Meta's portfolio.", "address": null, "country": "USA", "region": "Richland Parish, LA", "primary_image_url": "https://datacenters.atmeta.com/wp-content/uploads/2024/12/Richland-Parish-Data-Cener.jpg", "primary_image_local_path": "images/meta-richland-parish-la.jpg", "source_urls": "[\"https://datacenters.atmeta.com/richland-parish-data-center/\", \"https://www.datacenterdynamics.com/en/news/meta-announces-4-million-sq-ft-louisiana-data-center-campus/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "oci-us-ashburn-1", "name": "OCI us-ashburn-1", "operator": "Oracle", "latitude": 39.0438, "longitude": -77.4874, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 350.0, "capacity_use": "Oracle Cloud Infrastructure + xAI (Grok). Oracle signed a landmark deal with Elon Musk's xAI in 2024 to provide up to 131,072 NVIDIA H100 GPUs for Grok model training and inference. Oracle is xAI's primary cloud infrastructure partner. Also hosts Oracle database cloud and enterprise SaaS workloads.", "address": null, "country": "USA", "region": "Ashburn, VA", "primary_image_url": null, "primary_image_local_path": "images/oci-us-ashburn-1.jpg", "source_urls": "[\"https://www.oracle.com/cloud/data-regions/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "oci-uk-london-1", "name": "OCI uk-london-1", "operator": "Oracle", "latitude": 51.5074, "longitude": -0.1278, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 250.0, "capacity_use": "Oracle Cloud UK region; enterprise cloud and database workloads; UK-regulated financial services customers.", "address": null, "country": "UK", "region": "London", "primary_image_url": null, "primary_image_local_path": "images/oci-uk-london-1.jpg", "source_urls": "[\"https://www.oracle.com/cloud/data-regions/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "apple-maiden-nc", "name": "Apple Maiden iCloud", "operator": "Apple", "latitude": 35.5817, "longitude": -81.2095, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 200.0, "capacity_use": "Apple internal only — iCloud storage/sync, Siri NLP, App Store, Apple Maps. Apple does not sell cloud or AI capacity to third parties. 100% renewable energy; adjacent 200MW solar installation. Apple's first purpose-built data center.", "address": null, "country": "USA", "region": "Maiden, NC", "primary_image_url": null, "primary_image_local_path": "images/apple-maiden-nc.jpg", "source_urls": "[\"https://www.apple.com/environment/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "apple-reno-nv", "name": "Apple Reno", "operator": "Apple", "latitude": 39.5296, "longitude": -119.8138, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 150.0, "capacity_use": "Apple internal — iCloud and Apple services for Western US; Apple's Nevada campus.", "address": null, "country": "USA", "region": "Reno, NV", "primary_image_url": null, "primary_image_local_path": "images/apple-reno-nv.png", "source_urls": "[\"https://www.apple.com/environment/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "apple-waukee-ia", "name": "Apple Waukee", "operator": "Apple", "latitude": 41.6125, "longitude": -93.8819, "status": "operational", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 400.0, "capacity_use": "Apple internal — iCloud/Siri/Apple AI services; $1.3B campus opened October 2024 (seven years after announcement). Apple's largest data center campus. 100% renewable energy; Apple Intelligence AI workloads expected to grow here.", "address": null, "country": "USA", "region": "Waukee, IA", "primary_image_url": null, "primary_image_local_path": "images/apple-waukee-ia.png", "source_urls": "[\"https://www.apple.com/newsroom/2017/08/apples-next-us-data-center-will-be-built-in-iowa/\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "bytedance-hamina-fi", "name": "ByteDance Hamina", "operator": "ByteDance", "latitude": 60.5693, "longitude": 27.1972, "status": "under_construction", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 600.0, "capacity_use": "TikTok European user data storage — Project Clover (€12B total programme). Regulatory compliance facility: stores and processes European TikTok user data under GDPR, with independent cybersecurity oversight by NCC Group. Not an AI training facility; purpose is data sovereignty for EU regulators.", "address": null, "country": "Finland", "region": "Hamina", "primary_image_url": null, "primary_image_local_path": "images/bytedance-hamina-fi.png", "source_urls": "[\"https://newsroom.tiktok.com/en-eu/tiktok-sets-new-standards-for-security-and-sustainability-through-12-bn-project-clover-programme\", \"https://newsroom.tiktok.com/en-eu/cornerstonefinland\"]", "confidence": "high", "last_updated": "2026-05-11T21:37:53.325579+00:00"}, {"id": "bytedance-johor-my", "name": "ByteDance Johor", "operator": "ByteDance", "latitude": 1.4927, "longitude": 103.7414, "status": "planned", "construction_start_date": null, "expected_completion_date": null, "actual_completion_date": null, "build_duration_months": null, "capacity_mw": 500.0, "capacity_use": "TikTok/ByteDance Southeast Asia infrastructure; serving APAC social media users and ByteDance AI content recommendation algorithms.", "address": null, "country": "Malaysia", "region": "Johor", "primary_image_url": null, "primary_image_local_path": "images/bytedance-johor-my.jpg", "source_urls": "[]", "confidence": "low", "last_updated": "2026-05-11T21:37:53.325579+00:00"}];
+window.2026-05-11 = "2026-05-11";
 </script>
-<script>/* globe.js — interactive datacenter globe.
-   Data is injected as window.__DC_DATA__ by the build step.
-*/
+<script>/* globe.js — interactive datacenter map (investor tear sheet view).
+   Data is injected as window.__DC_DATA__ by the build step. */
+
+// ----- Constants -----
 
 const STATUS_COLOR = {
-  operational: "#3fb950",
-  under_construction: "#f0b429",
-  planned: "#4cc2ff",
-  retired: "#f85149",
+  operational:        "#4f9e58",
+  under_construction: "#d4a017",
+  planned:            "#5b87b8",
+  retired:            "#c14b46",
+};
+const STATUS_LABEL = {
+  operational:        "Operational",
+  under_construction: "Under construction",
+  planned:            "Planned",
+  retired:            "Retired",
 };
 
-const STATUS_LABEL = {
-  operational: "Operational",
-  under_construction: "Under construction",
-  planned: "Planned",
-  retired: "Retired",
+// Operator → parent company / ticker. Private companies have ticker:null.
+// Used for grouping filter pills + linking to public quote pages.
+// Phase 4 will deepen this (capex, fleet financials) — for now it's just identity.
+const OPERATOR_INFO = {
+  "AWS":       { parent: "Amazon",     ticker: "AMZN", quote: "https://www.google.com/finance/quote/AMZN:NASDAQ" },
+  "Azure":     { parent: "Microsoft",  ticker: "MSFT", quote: "https://www.google.com/finance/quote/MSFT:NASDAQ" },
+  "GCP":       { parent: "Alphabet",   ticker: "GOOGL", quote: "https://www.google.com/finance/quote/GOOGL:NASDAQ" },
+  "Meta":      { parent: "Meta",       ticker: "META", quote: "https://www.google.com/finance/quote/META:NASDAQ" },
+  "Oracle":    { parent: "Oracle",     ticker: "ORCL", quote: "https://www.google.com/finance/quote/ORCL:NYSE" },
+  "Apple":     { parent: "Apple",      ticker: "AAPL", quote: "https://www.google.com/finance/quote/AAPL:NASDAQ" },
+  "ByteDance": { parent: "ByteDance",  ticker: null,   quote: null },
+  "Tencent":   { parent: "Tencent",    ticker: "0700", quote: "https://www.google.com/finance/quote/0700:HKG" },
+  "Alibaba":   { parent: "Alibaba",    ticker: "BABA", quote: "https://www.google.com/finance/quote/BABA:NYSE" },
+  "Baidu":     { parent: "Baidu",      ticker: "BIDU", quote: "https://www.google.com/finance/quote/BIDU:NASDAQ" },
 };
+function operatorInfo(op) {
+  return OPERATOR_INFO[op] || { parent: op, ticker: null, quote: null };
+}
+
+// Tenant extraction — heuristic, runs against the free-text capacity_use prose.
+// Phase 2 replaces this with a real `tenants` schema + LLM enrichment.
+const TENANT_PATTERNS = [
+  { name: "Anthropic",         re: /\bAnthropic\b/i },
+  { name: "OpenAI",            re: /\bOpenAI\b/i },
+  { name: "xAI",               re: /\bxAI\b|\bGrok\b/i },
+  { name: "Meta AI",           re: /\bMeta AI\b|\bLlama\b/i },
+  { name: "Google DeepMind",   re: /\bDeepMind\b|\bGemini\b/i },
+  { name: "Apple Intelligence",re: /\bApple Intelligence\b/i },
+  { name: "Microsoft Copilot", re: /\bCopilot\b/i },
+  { name: "ByteDance / TikTok",re: /\bTikTok\b/i },
+  { name: "Amazon Bedrock",    re: /\bBedrock\b/i },
+];
+const COMMITMENT_RE = /\$\d{1,3}(?:\.\d+)?\s*(?:B(?:illion)?|M(?:illion)?|T(?:rillion)?)\+?/g;
+
+function extractTenants(text) {
+  if (!text) return [];
+  const found = new Set();
+  for (const { name, re } of TENANT_PATTERNS) {
+    if (re.test(text)) found.add(name);
+  }
+  return [...found];
+}
+function extractCommitments(text) {
+  if (!text) return [];
+  return [...new Set((text.match(COMMITMENT_RE) || []).map(s => s.replace(/\s+/g, "")))];
+}
+
+// ----- State -----
 
 const state = {
   data: window.__DC_DATA__ || [],
-  filteredOperators: new Set(),
+  filteredOperators: new Set(), // empty = all
   filteredStatuses: new Set(["operational", "under_construction", "planned"]),
+  filteredTenants: new Set(),   // empty = all
   search: "",
+  activeTab: "overview",
 };
+
+// Cache tenant list per record so we don't re-regex
+state.data.forEach(d => {
+  d._tenants = extractTenants(d.capacity_use);
+  d._commitments = extractCommitments(d.capacity_use);
+});
+
+// Operator fleet max MW — for the capacity-vs-fleet bar
+const OPERATOR_MAX_MW = {};
+state.data.forEach(d => {
+  if (!d.capacity_mw) return;
+  const k = d.operator;
+  if (!OPERATOR_MAX_MW[k] || d.capacity_mw > OPERATOR_MAX_MW[k]) OPERATOR_MAX_MW[k] = d.capacity_mw;
+});
 
 function visiblePoints() {
   const q = state.search.trim().toLowerCase();
   return state.data.filter(d => {
     if (state.filteredOperators.size && !state.filteredOperators.has(d.operator)) return false;
     if (!state.filteredStatuses.has(d.status)) return false;
+    if (state.filteredTenants.size) {
+      const has = d._tenants.some(t => state.filteredTenants.has(t));
+      if (!has) return false;
+    }
     if (q) {
-      const hay = `${d.name} ${d.operator} ${d.country || ""} ${d.region || ""}`.toLowerCase();
+      const hay = `${d.name} ${d.operator} ${d.country || ""} ${d.region || ""} ${d._tenants.join(" ")} ${d.capacity_use || ""}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
   });
 }
 
-function updateKPIs() {
+// ----- Top-bar metrics -----
+
+function fmtMW(mw) {
+  if (mw == null) return "—";
+  if (mw >= 1000) return (mw / 1000).toFixed(mw >= 10000 ? 0 : 2) + " GW";
+  return Math.round(mw).toLocaleString() + " MW";
+}
+
+function updateMetrics() {
   const pts = visiblePoints();
-  const total = pts.length;
   const totalMW = pts.reduce((s, d) => s + (d.capacity_mw || 0), 0);
   const construction = pts.filter(d => d.status === "under_construction").length;
-  document.getElementById("kpi-count").textContent = total.toLocaleString();
-  document.getElementById("kpi-mw").textContent = totalMW.toLocaleString() + " MW";
-  const pct = total ? Math.round((construction / total) * 100) : 0;
-  document.getElementById("kpi-construction").textContent = `${construction} (${pct}%)`;
+  const operational  = pts.filter(d => d.status === "operational").length;
+
+  document.getElementById("m-sites").textContent = pts.length.toLocaleString();
+  document.getElementById("m-mw").textContent = fmtMW(totalMW);
+  document.getElementById("m-construction").textContent = construction.toLocaleString();
+  document.getElementById("m-operational").textContent = operational.toLocaleString();
+
+  document.getElementById("fc-count").textContent = state.data.length.toLocaleString();
+
+  // Brand tag — current ISO week, derived from build date if present
+  const tag = document.getElementById("brand-tag");
+  const buildDate = window.2026-05-11;
+  let wk = "—";
+  try {
+    const d = buildDate ? new Date(buildDate) : new Date();
+    const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const dayNum = (target.getUTCDay() + 6) % 7;
+    target.setUTCDate(target.getUTCDate() - dayNum + 3);
+    const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+    wk = String(1 + Math.round((target - firstThursday) / 604800000)).padStart(2, "0");
+  } catch {}
+  tag.textContent = `v1.0 · WK ${wk}`;
 }
 
 function refreshGlobe() {
@@ -354,8 +1025,10 @@ function refreshGlobe() {
     globe.pointsData(pts);
     globe.ringsData(pts.filter(d => d.status === "under_construction" || d.status === "planned"));
   }
-  updateKPIs();
+  updateMetrics();
 }
+
+// ----- Date / source formatting -----
 
 function fmtDate(s) {
   if (!s) return "—";
@@ -363,53 +1036,126 @@ function fmtDate(s) {
   catch { return s; }
 }
 
+function urlHost(u) {
+  try { return new URL(u).host.replace(/^www\./, ""); } catch { return u; }
+}
+function urlPath(u) {
+  try { return new URL(u).pathname + new URL(u).search; } catch { return ""; }
+}
+
+// ----- Tabs -----
+
+function showTab(name) {
+  state.activeTab = name;
+  document.querySelectorAll(".tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.tab === name);
+  });
+  document.querySelectorAll(".tab-pane").forEach(p => {
+    p.hidden = p.dataset.pane !== name;
+  });
+  // Scroll back to top of body when switching
+  const body = document.querySelector(".panel-body");
+  if (body) body.scrollTop = 0;
+}
+
+// ----- Detail panel -----
+
 function openDetail(dc) {
   const panel = document.getElementById("detail-panel");
-  const hero = panel.querySelector(".hero");
-  if (dc.primary_image_url) {
-    hero.style.backgroundImage = `url("${dc.primary_image_url}")`;
-    hero.textContent = "";
-  } else if (dc.primary_image_local_path) {
-    hero.style.backgroundImage = `url("${dc.primary_image_local_path}")`;
-    hero.textContent = "";
+  panel.setAttribute("aria-hidden", "false");
+
+  // Hero image
+  const hero = document.getElementById("dc-hero");
+  const img = dc.primary_image_url || dc.primary_image_local_path;
+  if (img) {
+    hero.style.backgroundImage = `url("${img}")`;
+    hero.classList.remove("empty");
   } else {
     hero.style.backgroundImage = "";
-    hero.textContent = "(no photo yet)";
+    hero.classList.add("empty");
   }
 
+  // Header
   panel.querySelector(".dc-name").textContent = dc.name;
-  panel.querySelector(".dc-subtitle").innerHTML =
-    `${dc.operator} · ${dc.region || dc.country || "—"} ` +
-    `<span class="badge ${dc.status}">${STATUS_LABEL[dc.status] || dc.status}</span>`;
+  panel.querySelector(".dc-operator").textContent = dc.operator;
 
-  const rows = panel.querySelector(".rows");
-  rows.innerHTML = "";
-  const addRow = (k, v) => {
-    if (v === null || v === undefined || v === "") return;
-    const r = document.createElement("div");
-    r.className = "row";
-    r.innerHTML = `<span class="k">${k}</span><span class="v">${v}</span>`;
-    rows.appendChild(r);
-  };
-  addRow("Operator", dc.operator);
-  addRow("Location", [dc.region, dc.country].filter(Boolean).join(", "));
-  addRow("Coordinates", `${dc.latitude.toFixed(3)}, ${dc.longitude.toFixed(3)}`);
-  addRow("Confidence", dc.confidence || "—");
-
-  // Capacity
-  const gauge = panel.querySelector(".capacity-gauge");
-  if (dc.capacity_mw) {
-    gauge.style.display = "block";
-    gauge.querySelector(".mw").textContent = `${dc.capacity_mw.toLocaleString()} MW`;
-    gauge.querySelector(".label").textContent = dc.capacity_use || "Capacity";
+  const info = operatorInfo(dc.operator);
+  const tickerWrap = panel.querySelector(".dc-ticker-wrap");
+  tickerWrap.innerHTML = "";
+  if (info.ticker) {
+    const a = document.createElement("a");
+    a.className = "ticker-chip";
+    a.href = info.quote || "#";
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = info.ticker;
+    a.title = `${info.parent} · open quote`;
+    tickerWrap.appendChild(a);
   } else {
-    gauge.style.display = "none";
+    const span = document.createElement("span");
+    span.className = "ticker-chip private";
+    span.textContent = "PRIVATE";
+    span.title = `${info.parent} — not publicly traded`;
+    tickerWrap.appendChild(span);
   }
 
-  // Timeline
-  const tl = panel.querySelector(".timeline");
+  const badgeWrap = panel.querySelector(".dc-badge-wrap");
+  badgeWrap.innerHTML = `<span class="badge ${dc.status}">${STATUS_LABEL[dc.status] || dc.status}</span>`;
+
+  // ---- Overview tab ----
+
+  document.getElementById("dc-mw").textContent = dc.capacity_mw ? fmtMW(dc.capacity_mw) : "—";
+  document.getElementById("dc-cpm").textContent = "—"; // populated in P4
+  document.getElementById("dc-loc").textContent = [dc.region, dc.country].filter(Boolean).join(", ") || "—";
+  document.getElementById("dc-conf").textContent = (dc.confidence || "—").toUpperCase();
+
+  // Capacity vs operator fleet
+  const fleetMax = OPERATOR_MAX_MW[dc.operator] || 0;
+  const capPct = fleetMax > 0 && dc.capacity_mw ? Math.min(100, (dc.capacity_mw / fleetMax) * 100) : 0;
+  document.getElementById("dc-capfill").style.width = `${capPct}%`;
+  document.getElementById("dc-cappct").textContent = capPct > 0 ? `${capPct.toFixed(0)}%` : "—";
+  document.getElementById("dc-capref").textContent = fleetMax > 0
+    ? `of ${dc.operator} fleet max (${fmtMW(fleetMax)})`
+    : "no fleet reference";
+
+  // Tenants
+  const tenants = dc._tenants || [];
+  const tBox = document.getElementById("dc-tenants");
+  tBox.innerHTML = "";
+  if (tenants.length === 0) {
+    tBox.classList.add("empty");
+  } else {
+    tBox.classList.remove("empty");
+    tenants.forEach(t => tBox.appendChild(makeTenantChip(t, false)));
+  }
+  const tBoxLarge = document.getElementById("dc-tenants-large");
+  tBoxLarge.innerHTML = "";
+  if (tenants.length === 0) {
+    tBoxLarge.classList.add("empty");
+  } else {
+    tBoxLarge.classList.remove("empty");
+    tenants.forEach(t => tBoxLarge.appendChild(makeTenantChip(t, false)));
+  }
+
+  // Commitments
+  const cBox = document.getElementById("dc-commitments");
+  const cItems = document.getElementById("dc-commitments-items");
+  const commitments = dc._commitments || [];
+  if (commitments.length > 0) {
+    cBox.style.display = "block";
+    cItems.innerHTML = commitments
+      .map(c => `<span class="cc-item"><span class="cc-v">${c}</span></span>`)
+      .join("");
+  } else {
+    cBox.style.display = "none";
+  }
+
+  document.getElementById("dc-use").textContent = dc.capacity_use || "No capacity-use narrative yet.";
+
+  // ---- Build tab ----
+
+  const tl = document.getElementById("dc-timeline");
   tl.innerHTML = "";
-  const isDone = (s) => dc.status === "operational" || dc.status === "retired" || s === "construction_start_date" || (dc.status === "under_construction" && s === "construction_start_date");
   const addStep = (k, dateField, current = false) => {
     const v = fmtDate(dc[dateField]);
     const cls = current ? "current" : (dc[dateField] ? "done" : "");
@@ -425,48 +1171,87 @@ function openDetail(dc) {
     tl.innerHTML += `<div class="step"><span class="dot"></span><span class="k">Build duration</span><span class="v">${dc.build_duration_months.toFixed(1)} months</span></div>`;
   }
 
-  // Sources
-  const sources = panel.querySelector(".sources");
+  const rows = document.getElementById("dc-rows");
+  rows.innerHTML = "";
+  const addRow = (k, v) => {
+    if (v === null || v === undefined || v === "") return;
+    rows.innerHTML += `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  };
+  addRow("Operator", `${dc.operator} (${info.parent})`);
+  addRow("Ticker", info.ticker || "Private");
+  addRow("Country", dc.country);
+  addRow("Region", dc.region);
+  addRow("Coordinates", `${dc.latitude.toFixed(3)}, ${dc.longitude.toFixed(3)}`);
+  addRow("Address", dc.address);
+  addRow("Confidence", (dc.confidence || "—").toUpperCase());
+
+  // ---- Sources tab ----
+
+  const sources = document.getElementById("dc-sources");
   sources.innerHTML = "";
   let urls = [];
   try { urls = JSON.parse(dc.source_urls || "[]"); } catch {}
   if (Array.isArray(urls) && urls.length) {
     urls.forEach(u => {
       const a = document.createElement("a");
-      a.href = u; a.target = "_blank"; a.rel = "noopener"; a.textContent = u;
+      a.className = "src-row";
+      a.href = u; a.target = "_blank"; a.rel = "noopener";
+      a.innerHTML = `<span class="src-host">${urlHost(u)}</span><span class="src-path">${urlPath(u) || "/"}</span>`;
       sources.appendChild(a);
     });
   } else {
-    sources.innerHTML = `<span style="color:var(--text-dim)">No sources yet</span>`;
+    sources.innerHTML = `<div class="src-empty">No sources cited</div>`;
   }
 
+  // Reset to overview tab when opening
+  showTab("overview");
   panel.classList.add("open");
 
-  // Fly the camera to the point
+  // Fly camera
   if (globe) globe.pointOfView({ lat: dc.latitude, lng: dc.longitude, altitude: 1.5 }, 800);
 }
 
-function closeDetail() {
-  document.getElementById("detail-panel").classList.remove("open");
+function makeTenantChip(name, large) {
+  const chip = document.createElement("span");
+  chip.className = "tenant-chip";
+  chip.innerHTML = `<span class="tc-dot"></span><span>${name}</span>`;
+  chip.title = `Filter to facilities mentioning ${name}`;
+  if (state.filteredTenants.has(name)) chip.classList.add("active");
+  chip.addEventListener("click", () => {
+    if (state.filteredTenants.has(name)) state.filteredTenants.delete(name);
+    else state.filteredTenants.add(name);
+    refreshGlobe();
+    rebuildTenantFilterPills();
+    chip.classList.toggle("active");
+  });
+  return chip;
 }
 
-// ---------- Country polygons ----------
+function closeDetail() {
+  const panel = document.getElementById("detail-panel");
+  panel.classList.remove("open");
+  panel.setAttribute("aria-hidden", "true");
+}
+
+// ----- Country polygons -----
+
 function loadCountries() {
   fetch("countries.geojson")
     .then(r => r.json())
     .then(data => {
       globe
         .polygonsData(data.features)
-        .polygonCapColor(() => "rgba(12, 22, 44, 0.55)")
-        .polygonSideColor(() => "rgba(30, 60, 120, 0.12)")
-        .polygonStrokeColor(() => "#1e3d6e")
+        .polygonCapColor(() => "rgba(20, 24, 30, 0.45)")
+        .polygonSideColor(() => "rgba(50, 70, 100, 0.08)")
+        .polygonStrokeColor(() => "#2a3140")
         .polygonAltitude(0.001)
-        .polygonLabel(d => `<div style="background:#11161f;border:1px solid #232a37;padding:4px 8px;border-radius:4px;font-family:sans-serif;font-size:11px;color:#8b97a8">${d.properties.NAME || d.properties.name || ""}</div>`);
+        .polygonLabel(d => `<div class="gl-tooltip"><div class="gt-name">${d.properties.NAME || d.properties.name || ""}</div></div>`);
     })
-    .catch(() => {}); // silently skip if file not present locally
+    .catch(() => {});
 }
 
-// ---------- Globe setup ----------
+// ----- Globe init -----
+
 let globe;
 try {
   globe = Globe()
@@ -474,41 +1259,44 @@ try {
     .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
     .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
     .backgroundColor("#00000000")
-    // Fix: data uses latitude/longitude, not lat/lng
+    .showGraticules(true)
     .pointLat(d => d.latitude)
     .pointLng(d => d.longitude)
     .pointAltitude(d => Math.max(0.02, Math.min(0.10, (d.capacity_mw || 200) / 22000)))
     .pointRadius(d => 0.45 + Math.min(1.4, (d.capacity_mw || 200) / 1800))
     .pointColor(d => STATUS_COLOR[d.status] || "#888")
-    .pointLabel(d => `
-      <div style="background:#11161f;border:1px solid #232a37;padding:8px 10px;border-radius:6px;font-family:sans-serif;font-size:12px;color:#e6edf3;max-width:260px">
-        <div style="font-weight:600;margin-bottom:2px">${d.name}</div>
-        <div style="color:#8b97a8">${d.operator} · ${STATUS_LABEL[d.status] || d.status}</div>
-        ${d.capacity_mw ? `<div style="color:#4cc2ff;margin-top:4px">${d.capacity_mw.toLocaleString()} MW</div>` : ""}
-      </div>
-    `)
+    .pointLabel(d => {
+      const tenants = (d._tenants || []).slice(0, 3).join(" · ");
+      return `
+        <div class="gl-tooltip">
+          <div class="gt-name">${d.name}</div>
+          <div class="gt-meta">${d.operator} · ${STATUS_LABEL[d.status] || d.status}</div>
+          ${d.capacity_mw ? `<div class="gt-mw">${fmtMW(d.capacity_mw)}</div>` : ""}
+          ${tenants ? `<div class="gt-meta" style="margin-top:4px">${tenants}</div>` : ""}
+        </div>
+      `;
+    })
     .onPointClick(d => openDetail(d))
-    // Pulsing rings for under-construction and planned sites
     .ringLat(d => d.latitude)
     .ringLng(d => d.longitude)
     .ringColor(d => STATUS_COLOR[d.status] || "#888")
     .ringMaxRadius(3.5)
     .ringPropagationSpeed(1.2)
     .ringRepeatPeriod(1400)
-    .atmosphereColor("#4cc2ff")
-    .atmosphereAltitude(0.28);
+    .atmosphereColor("#d4a017")
+    .atmosphereAltitude(0.22);
 
   globe.controls().autoRotate = true;
-  globe.controls().autoRotateSpeed = 0.35;
+  globe.controls().autoRotateSpeed = 0.32;
   document.getElementById("globe-container").addEventListener("mousedown", () => {
     globe.controls().autoRotate = false;
   }, { once: true });
 
   loadCountries();
 
-  // Three.js starfield injected into the globe's scene
+  // Subtle starfield
   if (typeof THREE !== "undefined") {
-    const count = 4000;
+    const count = 3500;
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const theta = Math.random() * Math.PI * 2;
@@ -520,53 +1308,130 @@ try {
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.75 });
+    const mat = new THREE.PointsMaterial({ color: 0xe8e6e3, size: 0.55, transparent: true, opacity: 0.55 });
     globe.scene().add(new THREE.Points(geo, mat));
   }
 } catch (e) {
   console.error("Globe init failed:", e);
   document.getElementById("globe-container").innerHTML =
-    `<div style="color:#8b97a8;padding:40px;text-align:center">Globe failed to load. Check console for details.</div>`;
+    `<div style="color:var(--text-dim);padding:40px;text-align:center;font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em">GLOBE FAILED TO LOAD · CHECK CONSOLE</div>`;
 }
 
-// ---------- Filter UI ----------
-function buildFilters() {
-  const operators = [...new Set(state.data.map(d => d.operator))].sort();
-  const opBox = document.getElementById("filter-operators");
-  opBox.innerHTML = "";
-  operators.forEach(op => {
-    const id = `op-${op.replace(/\s+/g, "-")}`;
-    const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" id="${id}" checked /><span>${op}</span>`;
-    opBox.appendChild(label);
-    label.querySelector("input").addEventListener("change", e => {
-      if (e.target.checked) state.filteredOperators.delete(op);
-      else state.filteredOperators.add(op);
-      // We invert: an empty set means "all operators"
-      // Rebuild as: keep set of allowed operators
-      const allowed = operators.filter(o => document.getElementById(`op-${o.replace(/\s+/g, "-")}`).checked);
-      state.filteredOperators = new Set(allowed.length === operators.length ? [] : allowed);
-      refreshGlobe();
-    });
-  });
+// ----- Filter UI (pills) -----
 
+function buildStatusFilters() {
+  const box = document.getElementById("filter-statuses");
+  box.innerHTML = "";
   const statuses = ["operational", "under_construction", "planned"];
-  const stBox = document.getElementById("filter-statuses");
-  stBox.innerHTML = "";
   statuses.forEach(st => {
-    const id = `st-${st}`;
-    const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" id="${id}" checked />
-      <span class="dot" style="background:${STATUS_COLOR[st]}"></span>
-      <span>${STATUS_LABEL[st]}</span>`;
-    stBox.appendChild(label);
-    label.querySelector("input").addEventListener("change", e => {
-      if (e.target.checked) state.filteredStatuses.add(st);
-      else state.filteredStatuses.delete(st);
+    const count = state.data.filter(d => d.status === st).length;
+    const pill = document.createElement("span");
+    pill.className = "pill" + (state.filteredStatuses.has(st) ? " active" : "");
+    pill.innerHTML = `<span class="dot" style="background:${STATUS_COLOR[st]}"></span><span>${STATUS_LABEL[st]}</span><span class="count">${count}</span>`;
+    pill.addEventListener("click", () => {
+      if (state.filteredStatuses.has(st)) state.filteredStatuses.delete(st);
+      else state.filteredStatuses.add(st);
+      pill.classList.toggle("active");
       refreshGlobe();
     });
+    box.appendChild(pill);
   });
 }
+
+function buildOperatorFilters() {
+  const box = document.getElementById("filter-operators");
+  box.innerHTML = "";
+
+  const operators = [...new Set(state.data.map(d => d.operator))].sort();
+
+  // Group by parent
+  const byParent = {};
+  operators.forEach(op => {
+    const info = operatorInfo(op);
+    const key = info.parent + (info.ticker ? ` · ${info.ticker}` : " · PRIVATE");
+    (byParent[key] = byParent[key] || []).push(op);
+  });
+
+  const sortedParents = Object.keys(byParent).sort();
+  sortedParents.forEach(parentKey => {
+    const group = document.createElement("div");
+    group.className = "parent-group";
+
+    const label = document.createElement("div");
+    label.className = "parent-label";
+    label.textContent = parentKey;
+    group.appendChild(label);
+
+    const row = document.createElement("div");
+    row.className = "pill-row";
+
+    byParent[parentKey].forEach(op => {
+      const count = state.data.filter(d => d.operator === op).length;
+      const active = state.filteredOperators.size === 0 || state.filteredOperators.has(op);
+      const pill = document.createElement("span");
+      pill.className = "pill" + (active ? " active" : "");
+      pill.innerHTML = `<span>${op}</span><span class="count">${count}</span>`;
+      pill.addEventListener("click", () => {
+        const allOps = [...new Set(state.data.map(d => d.operator))];
+        // If currently "all", clicking flips to "only this one"
+        if (state.filteredOperators.size === 0) {
+          state.filteredOperators = new Set([op]);
+        } else if (state.filteredOperators.has(op) && state.filteredOperators.size === 1) {
+          // Clicking the only-active one returns to "all"
+          state.filteredOperators.clear();
+        } else if (state.filteredOperators.has(op)) {
+          state.filteredOperators.delete(op);
+          if (state.filteredOperators.size === 0) {
+            // never end up with "nothing visible" — interpret empty as "all"
+          }
+        } else {
+          state.filteredOperators.add(op);
+          if (state.filteredOperators.size === allOps.length) state.filteredOperators.clear();
+        }
+        buildOperatorFilters();
+        refreshGlobe();
+      });
+      row.appendChild(pill);
+    });
+
+    group.appendChild(row);
+    box.appendChild(group);
+  });
+}
+
+function buildTenantFilters() {
+  rebuildTenantFilterPills();
+}
+function rebuildTenantFilterPills() {
+  const box = document.getElementById("filter-tenants");
+  box.innerHTML = "";
+
+  // Collect unique tenants across all DCs
+  const tenantCounts = {};
+  state.data.forEach(d => (d._tenants || []).forEach(t => {
+    tenantCounts[t] = (tenantCounts[t] || 0) + 1;
+  }));
+  const tenants = Object.keys(tenantCounts).sort((a, b) => tenantCounts[b] - tenantCounts[a]);
+
+  if (tenants.length === 0) {
+    box.innerHTML = `<span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-mute);letter-spacing:0.1em">NONE PARSED</span>`;
+    return;
+  }
+  tenants.forEach(t => {
+    const pill = document.createElement("span");
+    pill.className = "pill" + (state.filteredTenants.has(t) ? " active" : "");
+    pill.innerHTML = `<span class="dot" style="background:var(--accent)"></span><span>${t}</span><span class="count">${tenantCounts[t]}</span>`;
+    pill.addEventListener("click", () => {
+      if (state.filteredTenants.has(t)) state.filteredTenants.delete(t);
+      else state.filteredTenants.add(t);
+      pill.classList.toggle("active");
+      refreshGlobe();
+    });
+    box.appendChild(pill);
+  });
+}
+
+// ----- Wire UI -----
 
 document.getElementById("search").addEventListener("input", e => {
   state.search = e.target.value;
@@ -576,8 +1441,14 @@ document.getElementById("search").addEventListener("input", e => {
 document.getElementById("close-detail").addEventListener("click", closeDetail);
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
 
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => showTab(t.dataset.tab));
+});
+
 // Init
-buildFilters();
+buildStatusFilters();
+buildOperatorFilters();
+buildTenantFilters();
 refreshGlobe();
 </script>
 </body>
