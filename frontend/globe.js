@@ -48,7 +48,7 @@ function updateKPIs() {
 }
 
 function refreshGlobe() {
-  globe.pointsData(visiblePoints());
+  if (globe) globe.pointsData(visiblePoints());
   updateKPIs();
 }
 
@@ -138,7 +138,7 @@ function openDetail(dc) {
   panel.classList.add("open");
 
   // Fly the camera to the point
-  globe.pointOfView({ lat: dc.latitude, lng: dc.longitude, altitude: 1.5 }, 800);
+  if (globe) globe.pointOfView({ lat: dc.latitude, lng: dc.longitude, altitude: 1.5 }, 800);
 }
 
 function closeDetail() {
@@ -146,31 +146,37 @@ function closeDetail() {
 }
 
 // ---------- Globe setup ----------
-const globe = Globe()
-  (document.getElementById("globe-container"))
-  .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
-  .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
-  .backgroundColor("#0a0e14")
-  .pointAltitude(d => Math.max(0.01, Math.min(0.06, (d.capacity_mw || 100) / 40000)))
-  .pointRadius(d => 0.25 + Math.min(0.6, (d.capacity_mw || 100) / 4000))
-  .pointColor(d => STATUS_COLOR[d.status] || "#888")
-  .pointLabel(d => `
-    <div style="background:#11161f;border:1px solid #232a37;padding:8px 10px;border-radius:6px;font-family:sans-serif;font-size:12px;color:#e6edf3;max-width:260px">
-      <div style="font-weight:600;margin-bottom:2px">${d.name}</div>
-      <div style="color:#8b97a8">${d.operator} · ${STATUS_LABEL[d.status] || d.status}</div>
-      ${d.capacity_mw ? `<div style="color:#4cc2ff;margin-top:4px">${d.capacity_mw.toLocaleString()} MW</div>` : ""}
-    </div>
-  `)
-  .onPointClick(d => openDetail(d))
-  .atmosphereColor("#4cc2ff")
-  .atmosphereAltitude(0.15);
+let globe;
+try {
+  globe = Globe()
+    (document.getElementById("globe-container"))
+    .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
+    .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
+    .backgroundColor("#0a0e14")
+    .pointAltitude(d => Math.max(0.01, Math.min(0.06, (d.capacity_mw || 100) / 40000)))
+    .pointRadius(d => 0.25 + Math.min(0.6, (d.capacity_mw || 100) / 4000))
+    .pointColor(d => STATUS_COLOR[d.status] || "#888")
+    .pointLabel(d => `
+      <div style="background:#11161f;border:1px solid #232a37;padding:8px 10px;border-radius:6px;font-family:sans-serif;font-size:12px;color:#e6edf3;max-width:260px">
+        <div style="font-weight:600;margin-bottom:2px">${d.name}</div>
+        <div style="color:#8b97a8">${d.operator} · ${STATUS_LABEL[d.status] || d.status}</div>
+        ${d.capacity_mw ? `<div style="color:#4cc2ff;margin-top:4px">${d.capacity_mw.toLocaleString()} MW</div>` : ""}
+      </div>
+    `)
+    .onPointClick(d => openDetail(d))
+    .atmosphereColor("#4cc2ff")
+    .atmosphereAltitude(0.15);
 
-// Auto-rotate gently until first user interaction
-globe.controls().autoRotate = true;
-globe.controls().autoRotateSpeed = 0.35;
-document.getElementById("globe-container").addEventListener("mousedown", () => {
-  globe.controls().autoRotate = false;
-}, { once: true });
+  globe.controls().autoRotate = true;
+  globe.controls().autoRotateSpeed = 0.35;
+  document.getElementById("globe-container").addEventListener("mousedown", () => {
+    globe.controls().autoRotate = false;
+  }, { once: true });
+} catch (e) {
+  console.error("Globe init failed:", e);
+  document.getElementById("globe-container").innerHTML =
+    `<div style="color:#8b97a8;padding:40px;text-align:center">Globe failed to load. Check console for details.</div>`;
+}
 
 // ---------- Filter UI ----------
 function buildFilters() {
