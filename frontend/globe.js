@@ -46,10 +46,47 @@ const state = {
   activeTab: "overview",
 };
 
-// Cache structured tenant list per record for filters/tooltips.
+// Tenant surfacing has two tiers:
+//   - structured: rows from datacenter_tenants (P2 LLM enrichment), source-cited
+//   - parsed:     regex over capacity_use prose (P1 fallback), heuristic
+// Until the LLM agent has been run for a given DC, fall back to parsed so the UI
+// still shows SOMETHING. _tenants_source drives a chip label so we never imply
+// parsed hits are source-cited.
+const TENANT_PATTERNS = [
+  { name: "Anthropic",          re: /\bAnthropic\b/i },
+  { name: "OpenAI",             re: /\bOpenAI\b/i },
+  { name: "xAI",                re: /\bxAI\b|\bGrok\b/i },
+  { name: "Meta AI",            re: /\bMeta AI\b|\bLlama\b/i },
+  { name: "Google DeepMind",    re: /\bDeepMind\b|\bGemini\b/i },
+  { name: "Apple Intelligence", re: /\bApple Intelligence\b/i },
+  { name: "Microsoft Copilot",  re: /\bCopilot\b/i },
+  { name: "ByteDance / TikTok", re: /\bTikTok\b/i },
+  { name: "Amazon Bedrock",     re: /\bBedrock\b/i },
+];
+const COMMITMENT_RE = /\$\d{1,3}(?:\.\d+)?\s*(?:B(?:illion)?|M(?:illion)?|T(?:rillion)?)\+?/g;
+
+function extractTenantsFromProse(text) {
+  if (!text) return [];
+  const found = new Set();
+  for (const { name, re } of TENANT_PATTERNS) if (re.test(text)) found.add(name);
+  return [...found];
+}
+function extractCommitmentsFromProse(text) {
+  if (!text) return [];
+  return [...new Set((text.match(COMMITMENT_RE) || []).map(s => s.replace(/\s+/g, "")))];
+}
+
 state.data.forEach(d => {
-  d._tenants = (d.tenants || []).map(t => t.tenant_name).filter(Boolean);
-  d._commitments = [...new Set((d.tenants || []).map(t => t.dollars_committed).filter(Boolean))];
+  const structured = d.tenants || [];
+  if (structured.length > 0) {
+    d._tenants = structured.map(t => t.tenant_name).filter(Boolean);
+    d._commitments = [...new Set(structured.map(t => t.dollars_committed).filter(Boolean))];
+    d._tenants_source = "structured";
+  } else {
+    d._tenants = extractTenantsFromProse(d.capacity_use);
+    d._commitments = extractCommitmentsFromProse(d.capacity_use);
+    d._tenants_source = d._tenants.length ? "parsed" : "none";
+  }
 });
 
 // Operator fleet max MW — for the capacity-vs-fleet bar
@@ -214,6 +251,7 @@ function openDetail(dc) {
 
   // Tenants
   const tenants = dc._tenants || [];
+  const provenance = dc._tenants_source || "none";
   const tBox = document.getElementById("dc-tenants");
   tBox.innerHTML = "";
   if (tenants.length === 0) {
@@ -221,6 +259,21 @@ function openDetail(dc) {
   } else {
     tBox.classList.remove("empty");
     tenants.forEach(t => tBox.appendChild(makeTenantChip(t, false)));
+  }
+  // Provenance badge — honest about whether chips are LLM-extracted+source-cited
+  // (structured) or just regex over operator prose (parsed).
+  const provBadge = document.getElementById("dc-tenants-prov");
+  if (provBadge) {
+    if (tenants.length === 0) {
+      provBadge.hidden = true;
+    } else {
+      provBadge.hidden = false;
+      provBadge.className = "prov-badge prov-" + provenance;
+      provBadge.textContent = provenance === "structured" ? "SOURCE CITED" : "PARSED FROM PRESS";
+      provBadge.title = provenance === "structured"
+        ? "Tenants extracted with evidence quotes from cited sources (Phase 2 enrichment)"
+        : "Tenants pattern-matched from capacity_use prose. Pending source-cited enrichment.";
+    }
   }
   const tBoxLarge = document.getElementById("dc-tenants-large");
   tBoxLarge.innerHTML = "";
