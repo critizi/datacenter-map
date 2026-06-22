@@ -33,7 +33,16 @@ def load_records() -> list[dict]:
     conn = connect()
     try:
         rows = conn.execute("SELECT * FROM datacenters").fetchall()
-        return [dict(r) for r in rows]
+        records = [dict(r) for r in rows]
+        for r in records:
+            tenants = conn.execute(
+                "SELECT tenant_name, parent_company, ticker, workload, share_pct, "
+                "dollars_committed, evidence_quote, confidence, source_url "
+                "FROM datacenter_tenants WHERE datacenter_id = ?",
+                (r["id"],),
+            ).fetchall()
+            r["tenants"] = [dict(t) for t in tenants]
+        return records
     finally:
         conn.close()
 
@@ -64,7 +73,10 @@ def render(records: list[dict]) -> str:
             .replace("__INLINE_CSS__", css)
             .replace("__INLINE_JS__", js)
             .replace("__DC_DATA_JSON__", data_json)
-            .replace("__BUILD_DATE__", build_date))
+            # NB: replace the value placeholder, NOT "__BUILD_DATE__" — the
+            # inlined globe.js reads window.__BUILD_DATE__, and a global replace
+            # of "__BUILD_DATE__" would corrupt that identifier into invalid JS.
+            .replace("__BUILD_DATE_VALUE__", build_date))
 
 
 def ensure_countries_geojson() -> None:

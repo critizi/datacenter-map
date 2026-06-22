@@ -19,7 +19,8 @@
     "primary_image_local_path": "images/aws-us-east-1.jpg",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "aws-us-west-2",
@@ -41,7 +42,8 @@
     "primary_image_local_path": "images/aws-us-west-2.png",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "aws-us-east-2",
@@ -63,7 +65,8 @@
     "primary_image_local_path": "images/aws-us-east-2.jpg",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "aws-eu-west-1",
@@ -85,7 +88,8 @@
     "primary_image_local_path": "images/aws-eu-west-1.png",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "aws-eu-central-1",
@@ -107,7 +111,8 @@
     "primary_image_local_path": "images/aws-eu-central-1.jpg",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "aws-ap-northeast-1",
@@ -129,7 +134,8 @@
     "primary_image_local_path": "images/aws-ap-northeast-1.png",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "aws-ap-southeast-1",
@@ -151,7 +157,8 @@
     "primary_image_local_path": "images/aws-ap-southeast-1.jpg",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "aws-sa-east-1",
@@ -173,7 +180,8 @@
     "primary_image_local_path": "images/aws-sa-east-1.jpg",
     "source_urls": "[\"https://aws.amazon.com/about-aws/global-infrastructure/regions_az/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "azure-east-us",
@@ -195,7 +203,8 @@
     "primary_image_local_path": "images/azure-east-us.jpg",
     "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "azure-west-us-2",
@@ -217,7 +226,8 @@
     "primary_image_local_path": "images/azure-west-us-2.png",
     "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "azure-north-europe",
@@ -239,7 +249,8 @@
     "primary_image_local_path": "images/azure-north-europe.png",
     "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "azure-west-europe",
@@ -261,7 +272,8 @@
     "primary_image_local_path": "images/azure-west-europe.png",
     "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "azure-southeast-asia",
@@ -283,7 +295,8 @@
     "primary_image_local_path": "images/azure-southeast-asia.jpg",
     "source_urls": "[\"https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "azure-mt-pleasant-wi",
@@ -305,7 +318,8 @@
     "primary_image_local_path": "images/azure-mt-pleasant-wi.jpg",
     "source_urls": "[\"https://news.microsoft.com/source/2024/05/08/microsoft-announces-3-3-billion-investment-in-wisconsin-to-spur-artificial-intelligence-innovation-and-economic-growth/\", \"https://blogs.microsoft.com/blog/2025/09/18/inside-the-worlds-most-powerful-ai-datacenter/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "gcp-us-central1",
@@ -327,7 +341,8 @@
     "primary_image_local_path": "images/gcp-us-central1.png",
     "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/iowa/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "gcp-us-east1",
@@ -349,7 +364,8 @@
     "primary_image_local_path": "images/gcp-us-east1.jpg",
     "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/south-carolina/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "gcp-europe-west1",
@@ -371,7 +387,8 @@
     "primary_image_local_path": "images/gcp-europe-west1.jpg",
     "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/belgium/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "gcp-asia-east1",
@@ -393,7 +410,8 @@
     "primary_image_local_path": "images/gcp-asia-east1.jpg",
     "source_urls": "[\"https://cloud.google.com/about/locations\", \"https://datacenters.google/locations/taiwan/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "gcp-asia-northeast1",
@@ -415,7 +433,8 @@
     "primary_image_local_path": "images/gcp-asia-northeast1.png",
     "source_urls": "[\"https://cloud.google.com/about/locations\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "meta-prineville-or",
@@ -437,7 +456,8 @@
     "primary_image_local_path": "images/meta-prineville-or.png",
     "source_urls": "[\"https://datacenters.atmeta.com/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "meta-forest-city-nc",
@@ -459,7 +479,8 @@
     "primary_image_local_path": "images/meta-forest-city-nc.jpg",
     "source_urls": "[\"https://datacenters.atmeta.com/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "meta-lulea-se",
@@ -481,7 +502,8 @@
     "primary_image_local_path": "images/meta-lulea-se.jpg",
     "source_urls": "[\"https://datacenters.atmeta.com/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "meta-clonee-ie",
@@ -503,7 +525,8 @@
     "primary_image_local_path": "images/meta-clonee-ie.png",
     "source_urls": "[\"https://datacenters.atmeta.com/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "meta-richland-parish-la",
@@ -525,7 +548,8 @@
     "primary_image_local_path": "images/meta-richland-parish-la.jpg",
     "source_urls": "[\"https://datacenters.atmeta.com/richland-parish-data-center/\", \"https://www.datacenterdynamics.com/en/news/meta-announces-4-million-sq-ft-louisiana-data-center-campus/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "oci-us-ashburn-1",
@@ -547,7 +571,8 @@
     "primary_image_local_path": "images/oci-us-ashburn-1.jpg",
     "source_urls": "[\"https://www.oracle.com/cloud/data-regions/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "oci-uk-london-1",
@@ -569,7 +594,8 @@
     "primary_image_local_path": "images/oci-uk-london-1.jpg",
     "source_urls": "[\"https://www.oracle.com/cloud/data-regions/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "apple-maiden-nc",
@@ -591,7 +617,8 @@
     "primary_image_local_path": "images/apple-maiden-nc.jpg",
     "source_urls": "[\"https://www.apple.com/environment/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "apple-reno-nv",
@@ -613,7 +640,8 @@
     "primary_image_local_path": "images/apple-reno-nv.png",
     "source_urls": "[\"https://www.apple.com/environment/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "apple-waukee-ia",
@@ -635,7 +663,8 @@
     "primary_image_local_path": "images/apple-waukee-ia.png",
     "source_urls": "[\"https://www.apple.com/newsroom/2017/08/apples-next-us-data-center-will-be-built-in-iowa/\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "bytedance-hamina-fi",
@@ -657,7 +686,8 @@
     "primary_image_local_path": "images/bytedance-hamina-fi.png",
     "source_urls": "[\"https://newsroom.tiktok.com/en-eu/tiktok-sets-new-standards-for-security-and-sustainability-through-12-bn-project-clover-programme\", \"https://newsroom.tiktok.com/en-eu/cornerstonefinland\"]",
     "confidence": "high",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   },
   {
     "id": "bytedance-johor-my",
@@ -679,6 +709,7 @@
     "primary_image_local_path": "images/bytedance-johor-my.jpg",
     "source_urls": "[]",
     "confidence": "low",
-    "last_updated": "2026-05-11T21:37:53.325579+00:00"
+    "last_updated": "2026-05-11T21:37:53.325579+00:00",
+    "tenants": []
   }
 ]

@@ -9,6 +9,73 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
 <style>__INLINE_CSS__</style>
+<style>
+.tenant-table-wrap { padding: 0 22px; }
+.tenant-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+.tenant-table th {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-align: left;
+  text-transform: uppercase;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--hairline);
+}
+.tenant-table td {
+  color: var(--text);
+  padding: 9px 6px;
+  border-bottom: 1px solid var(--hairline-soft);
+  vertical-align: top;
+}
+.tenant-table .tenant-name { color: var(--accent); font-weight: 600; }
+.tenant-table td:nth-child(2),
+.tenant-table td:nth-child(4),
+.tenant-table td:nth-child(6) {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+.tenant-table a {
+  color: var(--text-dim);
+  display: block;
+  margin-top: 5px;
+  text-decoration: none;
+}
+.tenant-table a:hover { color: var(--accent); }
+.evidence-toggle {
+  background: var(--panel-2);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  padding: 3px 7px;
+}
+.evidence-toggle:hover,
+.evidence-toggle.active {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.tenant-evidence-row td {
+  background: var(--panel-2);
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.tenant-empty {
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 12px 0;
+  text-transform: uppercase;
+}
+</style>
 </head>
 <body>
 
@@ -36,7 +103,7 @@
     <div id="filter-operators"></div>
   </div>
   <div class="group">
-    <h4>Tenants <span style="color:var(--text-mute);font-weight:400;letter-spacing:0">— parsed from sources</span></h4>
+    <h4>Tenants <span style="color:var(--text-mute);font-weight:400;letter-spacing:0">— source cited</span></h4>
     <div id="filter-tenants" class="pill-row"></div>
   </div>
 </div>
@@ -83,7 +150,7 @@
         </div>
       </div>
 
-      <div class="section-title">Named tenants &amp; commitments</div>
+      <div class="section-title">Named tenants &amp; commitments <span class="prov-badge" id="dc-tenants-prov" hidden></span></div>
       <div class="tenant-chips empty" id="dc-tenants"></div>
       <div class="commitments-callout" id="dc-commitments" style="display:none">
         <span class="cc-label">Disclosed commitments</span>
@@ -98,10 +165,23 @@
       <div style="padding: 22px;">
         <div class="section-title" style="margin-left:0;margin-right:0;margin-top:0">Tenant index</div>
         <div class="tenant-chips empty" id="dc-tenants-large"></div>
-        <div style="margin-top:18px;padding:12px 14px;background:var(--panel-2);border:1px dashed var(--hairline);border-radius:3px;font-size:11.5px;color:var(--text-dim);line-height:1.5">
-          <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mute);display:block;margin-bottom:4px">Roadmap · Phase 2</span>
-          Structured tenant records — workload type, % share of facility, $ committed, evidence quote, source-level confidence — ship in the next data release. Tenants shown above are extracted heuristically from operator press releases.
-        </div>
+      </div>
+      <div class="tenant-table-wrap">
+        <table class="tenant-table" id="dc-tenants-table">
+          <thead>
+            <tr>
+              <th>Tenant</th>
+              <th>Ticker</th>
+              <th>Workload</th>
+              <th>Share</th>
+              <th>$ committed</th>
+              <th>Confidence</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="dc-tenants-table-body"></tbody>
+        </table>
+        <div class="tenant-empty" id="dc-tenants-empty" hidden>No source-cited tenants</div>
       </div>
     </div>
 
@@ -121,7 +201,7 @@
 </aside>
 
 <div class="footer-credit">
-  <span>Data as of __BUILD_DATE__</span>
+  <span>Data as of __BUILD_DATE_VALUE__</span>
   <span>·</span>
   <span><span id="fc-count">—</span> facilities tracked</span>
   <span>·</span>
@@ -132,7 +212,7 @@
 <script src="//unpkg.com/globe.gl@2.30.0/dist/globe.gl.min.js"></script>
 <script>
 window.__DC_DATA__ = __DC_DATA_JSON__;
-window.__BUILD_DATE__ = "__BUILD_DATE__";
+window.__BUILD_DATE__ = "__BUILD_DATE_VALUE__";
 </script>
 <script>__INLINE_JS__</script>
 </body>

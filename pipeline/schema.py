@@ -38,6 +38,23 @@ CREATE INDEX IF NOT EXISTS idx_dc_operator ON datacenters(operator);
 CREATE INDEX IF NOT EXISTS idx_dc_status ON datacenters(status);
 CREATE INDEX IF NOT EXISTS idx_dc_country ON datacenters(country);
 
+CREATE TABLE IF NOT EXISTS datacenter_tenants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    datacenter_id TEXT NOT NULL REFERENCES datacenters(id),
+    tenant_name TEXT NOT NULL,
+    parent_company TEXT,
+    ticker TEXT,
+    workload TEXT,
+    share_pct REAL,
+    dollars_committed TEXT,
+    evidence_quote TEXT NOT NULL,
+    confidence TEXT CHECK (confidence IN ('low','medium','high')),
+    source_url TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_tenants_dc ON datacenter_tenants(datacenter_id);
+CREATE INDEX IF NOT EXISTS idx_tenants_name ON datacenter_tenants(tenant_name);
+
 CREATE TABLE IF NOT EXISTS scrape_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL,

@@ -6,9 +6,11 @@ Run order:
 3. Scrape operator press feeds (cheap, no API key)
 4. LLM discovery — turn press articles into structured DC rows
 5. LLM enrichment — fill missing fields on existing rows
-6. Build dist/
+6. LLM tenant enrichment - source-cited tenant/workload rows
+7. NASA GIBS satellite imagery
+8. Build dist/
 
-Steps 4 and 5 are skipped if ANTHROPIC_API_KEY is not set, so the pipeline
+Steps 4-6 are skipped if ANTHROPIC_API_KEY is not set, so the pipeline
 still produces a valid site without API access.
 """
 from __future__ import annotations
@@ -37,7 +39,7 @@ def run() -> None:
         traceback.print_exc()
 
     if os.environ.get("ANTHROPIC_API_KEY"):
-        from enrichment import llm_discovery, llm_enrich
+        from enrichment import llm_discovery, llm_enrich, llm_tenants
         print("\n== Step 4: LLM discovery ==")
         try:
             llm_discovery.run(limit=int(os.environ.get("DISCOVERY_LIMIT", "20")))
@@ -49,17 +51,23 @@ def run() -> None:
             llm_enrich.run(limit=int(os.environ.get("ENRICH_LIMIT", "20")))
         except Exception:
             traceback.print_exc()
-    else:
-        print("\n== Steps 4-5: LLM agents SKIPPED (ANTHROPIC_API_KEY not set) ==")
 
-    print("\n== Step 6: NASA GIBS satellite imagery ==")
+        print("\n== Step 6: LLM tenant enrichment ==")
+        try:
+            llm_tenants.run(limit=int(os.environ.get("TENANT_LIMIT", "20")))
+        except Exception:
+            traceback.print_exc()
+    else:
+        print("\n== Steps 4-6: LLM agents SKIPPED (ANTHROPIC_API_KEY not set) ==")
+
+    print("\n== Step 7: NASA GIBS satellite imagery ==")
     try:
         from pipeline.fetch_images import run as fetch_images
         fetch_images()
     except Exception:
         traceback.print_exc()
 
-    print("\n== Step 7: build dist/ ==")
+    print("\n== Step 8: build dist/ ==")
     n = build.build()
     print(f"\nDone — {n} datacenters in dist/index.html")
 

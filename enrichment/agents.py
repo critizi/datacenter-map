@@ -40,6 +40,29 @@ Status definitions:
 
 Return JSON matching the requested schema. Do not include commentary."""
 
+TENANTS_SCHEMA = """
+[
+  {
+    "tenant_name": "string - e.g. Anthropic, OpenAI, xAI",
+    "parent_company": "string | null",
+    "ticker": "string | null",
+    "workload": "training|inference|mixed|cloud|internal|null",
+    "share_pct": "float | null - estimated share of facility capacity",
+    "dollars_committed": "string | null - free text, e.g. $4B or $4B-$8B",
+    "evidence_quote": "string - exact sentence copied verbatim from fetched source text",
+    "confidence": "low|medium|high",
+    "source_url": "string | null"
+  }
+]
+
+Rules for tenant extraction:
+- Never assert a tenant unless evidence_quote is an exact sentence lifted from fetched source text.
+- If no source sentence supports a tenant, omit that tenant.
+- Use high confidence for SEC filings or earnings calls, medium for operator press releases,
+  and low for analyst notes or secondary reporting.
+- Leave uncertain fields null rather than guessing.
+"""
+
 
 def _client() -> Anthropic:
     if not CLIENT_KEY:
