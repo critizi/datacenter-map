@@ -18,7 +18,9 @@
       "Bash(Get-ChildItem \"c:\\\\Users\\\\Jakob Estrada\\\\datacenter-map\\\\data\\\\images\")",
       "Bash(Measure-Object)",
       "Bash(Select-Object -Expand Count)",
-      "Bash(Get-ChildItem \"c:\\\\Users\\\\Jakob Estrada\\\\datacenter-map\\\\dist\\\\images\")"
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\Jakob Estrada\\\\datacenter-map\\\\dist\\\\images\")",
+      "Bash(git merge *)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }
